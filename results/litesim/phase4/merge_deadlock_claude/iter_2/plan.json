@@ -1,0 +1,76 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    18,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 18"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    41,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 41"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    51,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 51"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    34,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 34"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    11,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 11"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    52,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 52"
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    50,
+    23
+   ],
+   "op": "scale",
+   "value": 0.0,
+   "rationale": "Remove stop_dist drive into h1 unit 50"
+  }
+ ],
+ "hypothesis": "In the merge deadlock, the large stop_dist input drives h1 units 18, 41, 51, 34, 11, 52 and 50. These feed h2 holder units that push alpha_v to -1 and brake high. Zeroing their stop_dist weights removes the hold in failure states. Those units are mostly inactive on nominal data, so nominal driving is not affected.",
+ "expected_effect": "The vehicle is released from the deadlock and completes the route on most OOD seeds. In rollouts, 9 of 10 OOD seeds succeeded: 8 of 8 on one batch, plus 50004 passed and 50009 collided in the other. All 5 nominal seeds still completed with score 100."
+}

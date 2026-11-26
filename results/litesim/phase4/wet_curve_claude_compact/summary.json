@@ -1,0 +1,17 @@
+{
+ "accepted": false,
+ "stop_reason": "editor_gave_up",
+ "iterations": 0,
+ "usage": {
+  "input_tokens": 1190681,
+  "output_tokens": 39236
+ },
+ "compactions": 2,
+ "env_steps": {
+  "gates": 0,
+  "rollouts": 10068
+ },
+ "diff": null,
+ "final_policy_hash": "9c138d3a97d271e24523c71907712290bc7b365a08ff578481017190db6df4d8",
+ "base_policy_hash": "9c138d3a97d271e24523c71907712290bc7b365a08ff578481017190db6df4d8"
+}

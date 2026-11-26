@@ -1,0 +1,15 @@
+{
+ "edits": [
+  {
+   "tensor": "fc3.bias",
+   "index": [
+    0
+   ],
+   "op": "add",
+   "value": -0.9,
+   "rationale": "Lower the alpha_v (speed target) output bias so the car drives slower through wet curves and stays under the friction limit."
+  }
+ ],
+ "hypothesis": "The wet_curve failures are overspeed: lateral acceleration exceeds the friction limit. Gated pathways through h1 unit 60 and the nominal-dead h2 units did not change rollout outcomes. A global alpha_v bias cut did: -0.4 still failed, while -0.9 and -1.5 passed.",
+ "expected_effect": "On wet_curve seeds 50000-50002, max lateral acceleration ratio drops from about 1.3-1.5 to about 0.66-0.83 with no failures. The 3 nominal seeds tested (0-2) still complete with route completion 1.0 and max ratio of 0.25 or less. The cut is global, so nominal driving is slower; I only checked 3 of the 5 nominal episodes, and held-out gate seeds are untested."
+}

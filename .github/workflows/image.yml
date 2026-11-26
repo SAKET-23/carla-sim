@@ -1,0 +1,49 @@
+name: image
+
+# Builds and pushes the RunPod pod image (Plan/04-gpu/image-and-bootstrap.md section 7). Manual only.
+# The Dockerfile's last RUN is the ECC-28 pin check, so the build fails if the pins do not import together and the
+# runner never pulls the image back.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (default: the short commit SHA)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Free disk space (CUDA devel base + ROS 2 + torch exceed a default runner)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v4
+      - name: Image name
+        id: name
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          # GHCR names must be lower case; the owner may not be
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/carla-sim-pod:${INPUT_TAG:-${GITHUB_SHA::7}}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/runpod/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.name.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=min

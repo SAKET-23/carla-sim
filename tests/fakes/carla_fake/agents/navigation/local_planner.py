@@ -1,0 +1,11 @@
+from enum import IntEnum
+
+
+class RoadOption(IntEnum):
+    VOID = -1
+    LEFT = 1
+    RIGHT = 2
+    STRAIGHT = 3
+    LANEFOLLOW = 4
+    CHANGELANELEFT = 5
+    CHANGELANERIGHT = 6

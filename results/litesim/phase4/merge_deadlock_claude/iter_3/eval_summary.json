@@ -1,0 +1,10 @@
+{
+ "ood_success_rate": 0.55,
+ "ood_failure_reasons": {
+  "collision": 17,
+  "blocked": 1
+ },
+ "nominal_mean_score": 97.72032533100524,
+ "nominal_collisions": 2,
+ "nominal_mpc_fallbacks": 0
+}

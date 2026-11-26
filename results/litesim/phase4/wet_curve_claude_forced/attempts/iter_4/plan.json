@@ -1,0 +1,103 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    0,
+    6
+   ],
+   "op": "set",
+   "value": -4.5,
+   "rationale": "wet gate on friction_est via h1 unit 0, which is dead on nominal"
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "gate bias"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": 12.0,
+   "rationale": "amplify gate into h2 unit 0, which is dead on nominal"
+  },
+  {
+   "tensor": "fc2.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 0.0,
+   "rationale": "keep h2 unit 0 dead on nominal"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": -6.6,
+   "rationale": "lower alpha_v when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    24,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    61,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    44,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    21,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc3.bias",
+   "index": [
+    0
+   ],
+   "op": "add",
+   "value": -0.45,
+   "rationale": "moderate global alpha_v reduction for extra margin"
+  }
+ ],
+ "hypothesis": "A friction_est-gated alpha_v reduction on wet states (h1 unit 0 into h2 unit 0 and the suppressed alpha_v-raising units) of about -0.65, combined with a global -0.45 shift, slows the vehicle enough in wet curves to stay under the friction limit. Nominal states see only the small global shift.",
+ "expected_effect": "Wet-curve max lateral acceleration ratio falls well below 1.0. In rollouts, seeds 50000 and 50002 gave 0.06 and 0.02. Nominal seeds 0-2 kept a driving score of 100 and full route completion."
+}

@@ -1,0 +1,56 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    18,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Unit 18 has the largest stop_dist weight (-1.71) and top failure-window attribution; halve it."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    41,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Unit 41 has a large negative stop_dist weight (-1.12); halve it."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    43,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Unit 43 has the largest positive stop_dist weight (1.19); halve it."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    51,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Unit 51 has a stop_dist weight of -0.74; halve it."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    53,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Unit 53 has a stop_dist weight of -0.80; halve it."
+  }
+ ],
+ "hypothesis": "In the merge deadlock, a large stop_dist input (above about 3) flips alpha_v from about +0.68 to about -0.94 through a few h1 units with large stop_dist weights. Halving those weights (units 18, 41, 43, 51, 53) raises the flip threshold, so the vehicle keeps moving in failure states while keeping the stop behaviour.",
+ "expected_effect": "Failure states with large stop_dist keep alpha_v positive and the deadlock is released. In rollouts, 9 of 10 OOD seeds succeeded (seed 50009 collided) and 5 of 5 nominal seeds completed with score 100."
+}

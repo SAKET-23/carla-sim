@@ -1,0 +1,29 @@
+{
+  "configById": {
+    "3D!main": {
+      "followTf": "base_link",
+      "layers": {},
+      "topics": {
+        "/carla/ego/lidar/points": {"visible": true},
+        "/carla/ground_truth/objects": {"visible": true},
+        "/perception/tracks3d": {"visible": true}
+      }
+    },
+    "Image!camera": {"cameraTopic": "/viz/camera_throttled"},
+    "Plot!cmd": {
+      "paths": [
+        {"value": "/carla/ego/command.steer", "enabled": true},
+        {"value": "/carla/ego/command.throttle", "enabled": true},
+        {"value": "/carla/ego/command.brake", "enabled": true}
+      ]
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {"speed": 1},
+  "layout": {
+    "first": "3D!main",
+    "second": {"first": "Image!camera", "second": "Plot!cmd", "direction": "column"},
+    "direction": "row"
+  }
+}

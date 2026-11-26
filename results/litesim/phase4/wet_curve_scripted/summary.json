@@ -1,0 +1,28 @@
+{
+ "accepted": true,
+ "stop_reason": "accepted",
+ "iterations": 2,
+ "usage": {
+  "input_tokens": 0,
+  "output_tokens": 0
+ },
+ "env_steps": {
+  "gates": 252463,
+  "rollouts": 0
+ },
+ "diff": {
+  "n_changed": 93,
+  "fraction_changed": 0.015617128463476071,
+  "l2_delta": 5.253266200057482,
+  "max_abs_delta": 2.9681922383606434,
+  "per_tensor": {
+   "fc1.weight": 24,
+   "fc1.bias": 1,
+   "fc2.weight": 64,
+   "fc2.bias": 1,
+   "fc3.weight": 3
+  }
+ },
+ "final_policy_hash": "74e2c4e7b21fdb0dee54bea744c8a41013f576553b8021d7763a2aa7488ddf33",
+ "base_policy_hash": "9c138d3a97d271e24523c71907712290bc7b365a08ff578481017190db6df4d8"
+}

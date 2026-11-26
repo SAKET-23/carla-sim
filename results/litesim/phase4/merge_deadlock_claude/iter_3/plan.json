@@ -1,0 +1,26 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    18,
+    23
+   ],
+   "op": "set",
+   "value": 0.0,
+   "rationale": "Remove unit 18 stop_dist dependence, which released seeds 50000 and 50002 without collisions."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    51,
+    23
+   ],
+   "op": "scale",
+   "value": 0.5,
+   "rationale": "Halve unit 51 stop_dist drive, which released the remaining blocked seeds 50001 and 50003."
+  }
+ ],
+ "hypothesis": "Units 18 and 51 carry the stop_dist-driven alpha_v hold in the merge deadlock. Removing unit 18's stop_dist link and halving unit 51's releases the deadlock without the early collisions seen when units 41 or 52 were changed.",
+ "expected_effect": "All four tested OOD seeds complete the route with no collisions, and the four tested nominal seeds keep full scores with no collisions. Nominal output shift is small."
+}

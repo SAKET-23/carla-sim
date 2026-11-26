@@ -1,0 +1,9 @@
+{
+ "ood_success_rate": 0.975,
+ "ood_failure_reasons": {
+  "lat_accel_ratio": 1
+ },
+ "nominal_mean_score": 84.87867086092257,
+ "nominal_collisions": 0,
+ "nominal_mpc_fallbacks": 0
+}

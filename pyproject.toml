@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hybrid_av"
+version = "0.1.0"
+description = "Hybrid autonomous-driving stack for CARLA"
+readme = "README.md"
+requires-python = "==3.10.*"
+dependencies = [
+    "numpy>=1.26,<2",
+    "scipy",
+    "osqp>=1.0",
+    "torch==2.14.1",
+    "pyyaml",
+    "gymnasium",
+    "pydantic>=2",
+    "matplotlib",
+    "pillow",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-benchmark", "ruff", "onnx"]
+llm = ["anthropic"]
+gpu = [
+    "carla==0.9.16",
+    "tensorrt-cu12",
+    "onnx",
+    "onnxruntime-gpu==1.23.2",
+    "kiss-icp",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hybrid_av"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+extend-exclude = ["Plan", "docs", "graft"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "benchmark: timing tests",
+    "slow: takes more than 10 s",
+    "gpu: needs CUDA/TensorRT (pod only)",
+    "carla: needs a running CARLA server (pod only)",
+    "ros: runs inside the ROS 2 dev image",
+]
+addopts = "-m 'not slow and not gpu and not carla and not ros'"

@@ -1,0 +1,13 @@
+# scenarios.md section 2
+dry: false
+straight_in: 120.0
+radius: 30.0
+angle_deg: 90.0
+straight_out: 100.0
+speed_limit: 13.89
+lane_width: 3.5
+mu: [0.30, 0.40]
+zone_lead: [10.0, 20.0]  # zone starts this far before the arc entry
+start_speed: [12.0, 14.0]
+roughness: [0.0, 0.3]
+time_slack: 30.0

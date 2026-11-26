@@ -1,0 +1,49 @@
+"""bridge_only.launch.py: carla_bridge with the full sensor rig, static TF and a fixed-command responder.
+
+Used by smoke 05 and G1 (rates, VRAM); no autonomy nodes."""
+
+import os
+from pathlib import Path
+
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, EmitEvent, OpaqueFunction, RegisterEventHandler
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
+from launch_ros.actions import Node
+
+ARGS = {"town": "Town03", "scenario": "nominal", "seed": "100000", "quality": "Low"}  # quality: recorded only
+
+
+def _repo_rig() -> str:
+    root = os.environ.get("HYBRID_AV_ROOT")
+    if root:
+        return str(Path(root) / "configs/sensors/carla_rig.yaml")
+    for parent in Path(__file__).resolve().parents:  # symlink-install: this is the file in the source tree
+        if (parent / "configs/sensors/carla_rig.yaml").exists():
+            return str(parent / "configs/sensors/carla_rig.yaml")
+    raise RuntimeError("configs/sensors/carla_rig.yaml not found: set HYBRID_AV_ROOT")
+
+
+def _nodes(context):
+    a = {k: context.launch_configurations[k] for k in ARGS}
+    rig = _repo_rig()
+    bridge = Node(  # the tick owner publishes /clock: no use_sim_time
+        package="hybrid_av_nodes", executable="carla_bridge", name="carla_bridge", output="screen",
+        parameters=[{"town": a["town"], "scenario": a["scenario"], "seed": int(a["seed"]),
+                     "quality": a["quality"], "sensors": rig}],
+    )  # fmt: skip
+    return [
+        Node(package="hybrid_av_bringup", executable="static_tf", name="static_tf", output="screen",
+             parameters=[{"use_sim_time": True, "rig": rig}]),
+        Node(package="hybrid_av_nodes", executable="command_responder", name="command_responder",
+             output="screen"),
+        bridge,
+        RegisterEventHandler(OnProcessExit(target_action=bridge, on_exit=[EmitEvent(event=Shutdown())])),
+    ]  # fmt: skip
+
+
+def generate_launch_description():
+    return LaunchDescription(
+        [DeclareLaunchArgument(k, default_value=v) for k, v in ARGS.items()]
+        + [OpaqueFunction(function=_nodes)]
+    )

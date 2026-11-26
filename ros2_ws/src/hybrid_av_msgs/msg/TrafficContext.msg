@@ -1,0 +1,9 @@
+std_msgs/Header header
+uint8 light_state
+float32 dist_to_stop_line
+float32 dist_to_stop_sign
+float32 dist_to_junction
+float32 speed_limit
+float32 lane_width
+float32 road_grade
+float32 surface_roughness

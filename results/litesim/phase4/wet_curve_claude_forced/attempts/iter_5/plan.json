@@ -1,0 +1,85 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    0,
+    6
+   ],
+   "op": "set",
+   "value": -4.42,
+   "rationale": "wet gate on friction_est via h1 unit 0, dead on nominal"
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "gate bias"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    24,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    61,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    44,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    21,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "suppress alpha_v-raising unit when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "gate drives dead h2 unit 0"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": -6.5,
+   "rationale": "h2 unit 0 lowers alpha_v when wet"
+  }
+ ],
+ "hypothesis": "A friction_est-gated alpha_v reduction on wet states (h1 unit 0, dead on nominal, driving dead h2 unit 0 and suppressing alpha_v-raising h2 units) lowers speed in wet curves. Nominal states are essentially untouched (offline nominal shift about 0.015 mean).",
+ "expected_effect": "Wet-curve alpha_v drops by about 0.65 with near-zero nominal shift. Rollouts on seeds 50005-50007 gave max lat accel ratio 0.57, 1.33 and 0.56, so 2 of 3 passed. Earlier seeds 50000-50004 improved only partly. Expect partial OOD success with nominal driving retained."
+}

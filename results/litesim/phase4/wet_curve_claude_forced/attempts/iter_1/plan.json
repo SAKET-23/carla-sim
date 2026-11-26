@@ -1,0 +1,95 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    0,
+    6
+   ],
+   "op": "set",
+   "value": -4.5,
+   "rationale": "h1 unit 0 is dead on nominal; negative weight on friction_est makes it fire only at low friction (wet)"
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "bias keeps the gate off at nominal friction and on when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    24,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "wet gate suppresses alpha_v-raising h2 unit 24"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    61,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "wet gate suppresses alpha_v-raising h2 unit 61"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    44,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "wet gate suppresses alpha_v-raising h2 unit 44"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    21,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "wet gate suppresses alpha_v-raising h2 unit 21"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": 14.0,
+   "rationale": "wet gate strongly drives dead h2 unit 0"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": -4.0,
+   "rationale": "h2 unit 0 lowers alpha_v on wet states"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    2,
+    0
+   ],
+   "op": "set",
+   "value": 6.5,
+   "rationale": "h2 unit 0 raises brake on wet states, within value limit"
+  }
+ ],
+ "hypothesis": "A wet-surface gate on h1 unit 0 (dead on nominal) reads friction_est. When wet, it suppresses alpha_v-raising h2 units and drives dead h2 unit 0 to lower alpha_v and raise brake, so the vehicle slows in curves and stays under the friction limit.",
+ "expected_effect": "On wet curve states the vehicle slows and lat_accel_ratio stays well below 1.0 (rollouts on seeds 50000-50006 gave max ratio about 0.12-0.22 and no failures). Nominal outputs are unchanged (zero offline shift). Route completion on wet scenarios is reduced because the vehicle drives slowly."
+}

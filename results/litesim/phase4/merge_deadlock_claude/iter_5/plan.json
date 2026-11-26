@@ -1,0 +1,25 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    18,
+    23
+   ],
+   "op": "set",
+   "value": 0.0,
+   "rationale": "Remove h1 unit 18's stop_dist drive. This unit is the strongest stop_dist driver of the alpha_v flip to -1 in failure states, and zeroing it released seed 50000 without a collision."
+  },
+  {
+   "tensor": "fc3.bias",
+   "index": [
+    0
+   ],
+   "op": "add",
+   "value": 0.1,
+   "rationale": "Small alpha_v lift that released seed 50003, which was held negative by something other than stop_dist. A larger lift caused collisions on seed 50004."
+  }
+ ],
+ "hypothesis": "The merge deadlock is held by alpha_v being pushed to about -1 when the large stop_dist input drives h1 unit 18. Some seeds are also held at negative alpha_v by other paths. Removing unit 18's stop_dist weight and adding a small alpha_v bias lift releases part of the deadlocks. Larger changes (units 41 or 52, bigger bias lifts) caused early collisions.",
+ "expected_effect": "Seeds 50000 and 50003 complete the route. Seeds 50004 and 50005 may still be blocked, so OOD success is likely below the 0.8 threshold. Nominal driving stayed at 100 score on seeds 0-2."
+}

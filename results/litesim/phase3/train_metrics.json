@@ -1,0 +1,72 @@
+{
+  "bc_wall_s": 986.6230802536011,
+  "dagger_wall_s": 2529.740243911743,
+  "dagger": [
+    {
+      "round": 1,
+      "n_samples": 400000,
+      "val_loss": 0.029037194326519966
+    },
+    {
+      "round": 2,
+      "n_samples": 500000,
+      "val_loss": 0.02409970387816429
+    },
+    {
+      "round": 3,
+      "n_samples": 600000,
+      "val_loss": 0.024256940931081772
+    },
+    {
+      "round": 4,
+      "n_samples": 700000,
+      "val_loss": 0.033499520272016525
+    },
+    {
+      "round": 5,
+      "n_samples": 800000,
+      "val_loss": 0.025572603568434715
+    },
+    {
+      "round": 6,
+      "n_samples": 900000,
+      "val_loss": 0.02473265305161476
+    },
+    {
+      "round": 7,
+      "n_samples": 1000000,
+      "val_loss": 0.021658876910805702
+    },
+    {
+      "round": 8,
+      "n_samples": 1100000,
+      "val_loss": 0.02301250398159027
+    }
+  ],
+  "ppo_wall_s": 0.003316164016723633,
+  "total_steps": 0,
+  "final_log_row": {},
+  "ppo": {
+    "n_envs": 12,
+    "n_steps": 512,
+    "total_steps": 0,
+    "lr": 0.0003,
+    "lr_schedule": "linear",
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "clip_eps": 0.2,
+    "n_epochs": 10,
+    "minibatch_size": 1024,
+    "vf_coef": 0.5,
+    "vf_clip": 10.0,
+    "ent_coef": 0.0,
+    "log_std_init": -1.0,
+    "log_std_min": -3.0,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "reward_norm": true,
+    "critic_warmup_iters": 20,
+    "checkpoint_every": 250000,
+    "seed": 1
+  }
+}

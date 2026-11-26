@@ -1,0 +1,94 @@
+{
+ "edits": [
+  {
+   "tensor": "fc3.bias",
+   "index": [
+    0
+   ],
+   "op": "add",
+   "value": -0.6,
+   "rationale": "Moderate global alpha_v reduction, smaller than -1.0 so nominal driving is slowed less."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    0,
+    6
+   ],
+   "op": "set",
+   "value": -4.5,
+   "rationale": "Wet gate on h1 unit 0, dead on nominal, reading friction_est."
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "Gate bias."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    24,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "Suppress alpha_v-raising unit when wet."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    61,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "Suppress alpha_v-raising unit when wet."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    44,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "Suppress alpha_v-raising unit when wet."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    21,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "Suppress alpha_v-raising unit when wet."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": 9.0,
+   "rationale": "Drive dead h2 unit 0 when wet."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": -6.5,
+   "rationale": "Extra alpha_v reduction when wet."
+  }
+ ],
+ "hypothesis": "Global alpha_v shifts of -0.8 to -1.0 lowered the wet-curve peak lateral acceleration ratio below 1.0, but -1.0 slowed nominal driving too much (one nominal seed failed). A smaller global shift of -0.6 combined with the friction_est-gated reduction (about -0.65 on wet states, zero on nominal) should give wet states a total drop near -1.2 while nominal sees only -0.6.",
+ "expected_effect": "Wet-curve lat accel ratio falls below 1.0 on most seeds, and nominal episodes still complete with a milder slowdown than -1.0. This combined plan was not verified by rollout because the budget ran out."
+}

@@ -1,0 +1,46 @@
+{
+ "edits": [
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    9
+   ],
+   "op": "scale",
+   "value": 0.6,
+   "rationale": "Partially reduce h2 unit 9's negative push on alpha_v"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    19
+   ],
+   "op": "scale",
+   "value": 0.6,
+   "rationale": "Partially reduce h2 unit 19's negative push on alpha_v"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    63
+   ],
+   "op": "scale",
+   "value": 0.6,
+   "rationale": "Partially reduce h2 unit 63's negative push on alpha_v"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    13
+   ],
+   "op": "scale",
+   "value": 0.6,
+   "rationale": "Partially reduce h2 unit 13's negative push on alpha_v"
+  }
+ ],
+ "hypothesis": "In the merge deadlock, alpha_v is held near -1 by several h2 units (9, 19, 63, 13) with negative fc3 weights that are active in failure states. Scaling those weights to 0.6 weakens the hold enough to release the vehicle while keeping some caution around cross traffic. Zeroing them or scaling to 0.4 caused early collisions, and scaling to 0.7 did not release enough.",
+ "expected_effect": "alpha_v rises on failure states so the vehicle leaves the deadlock. In rollouts, scale 0.6 fixed 4 of 5 hard seeds, with 50009 still colliding. Nominal rollouts under the zeroed variant stayed at 100, and the 0.6 edit is a smaller change, so nominal driving should be preserved."
+}

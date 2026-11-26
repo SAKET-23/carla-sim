@@ -1,0 +1,10 @@
+# Phase 3 exit evaluation (development seeds 50000-50049). --policy overrides base_policy.path.
+backend: litesim
+methods:
+  - {name: base_policy, source: policy, path: results/litesim/phase3/actor_final.pt}
+  - {name: expert, source: expert}
+  - {name: mpc_only, source: constant}
+scenarios:
+  - {family: nominal, seeds: [50000, 50]}
+  - {family: wet_curve, seeds: [50000, 50]}
+  - {family: merge_deadlock, seeds: [50000, 50]}

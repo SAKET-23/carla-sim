@@ -1,0 +1,9 @@
+# G5 benchmark skeleton (benchmark seeds 100000-100049); methods are filled in during Phase G5.
+backend: carla
+methods:
+  - {name: mpc_only, source: constant}
+  - {name: expert, source: expert}
+scenarios:
+  - {family: nominal, seeds: [100000, 50]}
+  - {family: wet_curve, seeds: [100000, 50]}
+  - {family: merge_deadlock, seeds: [100000, 50]}

@@ -1,0 +1,95 @@
+{
+ "edits": [
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    0,
+    6
+   ],
+   "op": "set",
+   "value": -4.5,
+   "rationale": "h1 unit 0 is dead on nominal; it reads friction_est with a negative weight so it fires only on wet surfaces"
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    0
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "gate bias, set so the unit stays off on nominal friction"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    24,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "gate suppresses alpha_v-raising h2 unit 24 when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    61,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "gate suppresses alpha_v-raising h2 unit 61 when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    44,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "gate suppresses alpha_v-raising h2 unit 44 when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    21,
+    0
+   ],
+   "op": "set",
+   "value": -3.0,
+   "rationale": "gate suppresses alpha_v-raising h2 unit 21 when wet"
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": 8.0,
+   "rationale": "gate strongly drives h2 unit 0, which is dead on nominal, when wet"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    0
+   ],
+   "op": "set",
+   "value": -6.0,
+   "rationale": "h2 unit 0 lowers alpha_v when wet"
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    2,
+    0
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "h2 unit 0 raises brake when wet"
+  }
+ ],
+ "hypothesis": "A wet-surface gate on h1 unit 0 (dead on nominal) reads friction_est. When wet, it suppresses the alpha_v-raising h2 units and drives dead h2 unit 0 to lower alpha_v and raise brake. The vehicle then slows enough to stay under the friction limit in wet curves, and nominal states are unchanged.",
+ "expected_effect": "On wet states alpha_v drops and brake rises, so lat_accel_ratio falls well below 1.0 (rollouts on seeds 50000-50005 gave 0.18-0.33, all 6 passing). Nominal output shift is exactly 0. Wet episodes complete only about 56% of the route (driving score about 40), so they run slow."
+}

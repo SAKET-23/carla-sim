@@ -1,0 +1,24 @@
+N: 20
+dt: 0.05
+Q: [1.0, 0.5, 0.5, 0.0, 0.0, 0.0]
+w_lat: 20.0
+w_lon: 2.0
+w_psi: 10.0
+R: [1.0, 0.5]
+R_delta: [50.0, 1.0]
+P_scale: 5.0
+delta_max: 0.70
+ddelta_max: 0.15
+ax_min: -4.5
+ax_max: 2.5
+mu_default: 1.0
+friction_margin: 0.85
+w_slack_friction: 10000.0
+w_slack_obstacle: 100000.0
+max_obstacles: 4
+obstacle_margin: 1.0
+max_iter: 4000
+eps_abs: 0.0001
+eps_rel: 0.0001
+time_limit: 0.015
+cold_start_time_factor: 4.0

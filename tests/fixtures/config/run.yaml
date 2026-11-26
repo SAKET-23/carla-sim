@@ -1,0 +1,2 @@
+mpc_config: tests/fixtures/config/sample.yaml
+seed: 3

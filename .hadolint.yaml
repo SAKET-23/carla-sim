@@ -1,0 +1,7 @@
+ignored:
+  # DL3008: apt packages are not version-pinned; the Ubuntu 22.04 archive and the ROS repository move on security
+  # updates, and a pinned version would vanish from the mirrors and break rebuilds. Reproducibility comes from the
+  # dated base-image tag and the final pin-check RUN (ECC-28).
+  - DL3008
+  # DL3059: layers are grouped by purpose (image-and-bootstrap.md section 2), not merged to save a layer.
+  - DL3059

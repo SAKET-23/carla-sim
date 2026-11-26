@@ -1,0 +1,19 @@
+q_accel: 2.0
+q_accel_pedestrian: 1.0
+sigma_lidar_pos: 0.3
+sigma_radar_rr: 0.25
+init_sigma_pos: 0.5
+init_sigma_vel: 5.0
+gate_chi2: 9.21
+radar_gate_m: 2.5
+radar_max_altitude_deg: 5.0
+radar_min_height: 0.2
+radar_max_height: 2.5
+min_score: 0.4
+confirm_m: 3
+confirm_n: 5
+max_misses: 5
+max_misses_tentative: 2
+alpha_size: 0.3
+max_range: 70.0
+class_compat: [[CAR, TRUCK]]

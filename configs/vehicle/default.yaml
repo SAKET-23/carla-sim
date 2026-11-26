@@ -1,0 +1,14 @@
+m: 1500.0
+Iz: 2250.0
+a: 1.2
+b: 1.6
+Cf: 19000.0
+Cr: 20000.0
+max_steer: 0.70
+max_steer_wheel: 0.70
+length: 4.7
+width: 1.9
+max_accel: 2.5
+max_decel: 4.5
+drag_coeff: 0.0004
+rolling: 0.15

@@ -1,0 +1,134 @@
+{
+ "edits": [
+  {
+   "tensor": "fc3.bias",
+   "index": [
+    0
+   ],
+   "op": "add",
+   "value": -0.8,
+   "rationale": "Global alpha_v cut; passed 10/10 wet seeds and 3/3 nominal seeds in rollouts."
+  },
+  {
+   "tensor": "fc1.weight",
+   "index": [
+    60,
+    6
+   ],
+   "op": "set",
+   "value": -6.3,
+   "rationale": "Make nominal-dead h1 unit 60 a low friction_est detector."
+  },
+  {
+   "tensor": "fc1.bias",
+   "index": [
+    60
+   ],
+   "op": "set",
+   "value": 3.0,
+   "rationale": "Bias at allowed cap so unit fires only on wet states."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    17,
+    60
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "Route wet detector into nominal-dead h2 17."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    23,
+    60
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "Route wet detector into nominal-dead h2 23."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    26,
+    60
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "Route wet detector into nominal-dead h2 26."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    29,
+    60
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "Route wet detector into nominal-dead h2 29."
+  },
+  {
+   "tensor": "fc2.weight",
+   "index": [
+    35,
+    60
+   ],
+   "op": "set",
+   "value": 6.0,
+   "rationale": "Route wet detector into nominal-dead h2 35."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    17
+   ],
+   "op": "set",
+   "value": -5.0,
+   "rationale": "Gated alpha_v cut from h2 17."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    23
+   ],
+   "op": "set",
+   "value": -5.0,
+   "rationale": "Gated alpha_v cut from h2 23."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    26
+   ],
+   "op": "set",
+   "value": -5.0,
+   "rationale": "Gated alpha_v cut from h2 26."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    29
+   ],
+   "op": "set",
+   "value": -5.0,
+   "rationale": "Gated alpha_v cut from h2 29."
+  },
+  {
+   "tensor": "fc3.weight",
+   "index": [
+    0,
+    35
+   ],
+   "op": "set",
+   "value": -5.0,
+   "rationale": "Gated alpha_v cut from h2 35."
+  }
+ ],
+ "hypothesis": "Wet-curve failures are overspeed past the friction limit. A moderate global alpha_v bias cut (-0.8) combined with a wet-gated extra cut (h1 unit 60 as low-friction detector feeding nominal-dead h2 units with strongly negative alpha_v weights) keeps lateral acceleration under the limit.",
+ "expected_effect": "Lat accel ratio below 1.0 on wet-curve seeds (10/10 passed in rollouts, max ratio 0.95) while nominal driving is kept (3/3 nominal seeds passed with score 100). The gated path adds zero shift on nominal states offline."
+}

@@ -1,0 +1,34 @@
+# scenarios.md section 1 (ranges are [lo, hi])
+traffic: true
+n_segments: [3, 6]
+straight_length: [40.0, 150.0]
+arc_radius: [25.0, 150.0]
+arc_angle_deg: [30.0, 120.0]
+total_length: [300.0, 800.0]
+speed_limits: [8.33, 11.11, 13.89]
+lane_width: 3.5
+roughness: [0.0, 0.3]
+start_speed_frac: 0.5  # judgement call: rolling start at this fraction of the limit
+lead_prob: 0.6
+lead_s0: [20.0, 50.0]
+lead_cruise_frac: [0.6, 1.0]
+lead_brake_prob: 0.3
+lead_brake_to_frac: [0.0, 0.5]
+lead_brake_decel: [2.0, 4.0]
+lead_brake_t: [3.0, 10.0]  # judgement call: braking event time
+lead_brake_hold: [3.0, 8.0]  # s at brake_to before the lead accelerates back
+light_prob: 0.5
+light_cycle: [10.0, 3.0, 10.0]
+stop_sign_prob: 0.3
+junction_prob: 0.4
+junction_length: 10.0
+cross_path_offset: 3.0
+cross_speed: [8.0, 11.0]
+cross_gap_mean: 6.0
+cross_gap_min: 2.5
+ped_prob: 0.2
+ped_trigger: [25.0, 40.0]
+ped_speed: [1.0, 1.6]
+event_margin: [60.0, 30.0]  # events placed between margin[0] and length - margin[1]
+event_slot: 25.0  # one event per slot so stop lines, junctions and crossings never overlap
+time_slack: 30.0

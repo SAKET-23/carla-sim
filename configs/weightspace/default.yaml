@@ -1,0 +1,18 @@
+max_edits: 208
+max_value_factor: 3.0
+max_iterations: 5
+retention_threshold: 0.95
+ood_success_threshold: 0.8
+bundle_seeds: [50000, 50009]
+gate_ood_seeds: [50010, 50049]
+retention_seeds: [50000, 50049]
+rollout_nominal_seeds: [0, 9]
+rollout_budget: 40
+gradient_tools: true
+gate_short_circuit: false
+editor: anthropic
+model: claude-opus-5-5
+max_tokens_per_call: 16000
+max_tool_calls_per_iteration: 60
+max_input_tokens_total: 3000000
+backend: litesim

@@ -1,0 +1,9 @@
+# KISS-ICP ROS 2 wrapper parameters (ECC-24). Names follow the 1.3 wrapper source and may differ in the pinned tag:
+# check `ros2 param list /kiss_icp_node` on the pod.
+kiss_icp_node:
+  ros__parameters:
+    deskew: false
+    base_frame: base_link
+    odom_frame: odom
+    publish_odom_tf: true
+    visualize: false

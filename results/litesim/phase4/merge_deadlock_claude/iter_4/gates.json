@@ -1,0 +1,42 @@
+[
+ {
+  "passed": true,
+  "gate": "count",
+  "detail": "5 parameters changed (allowed 1..208)"
+ },
+ {
+  "passed": true,
+  "gate": "index_range",
+  "detail": "ok"
+ },
+ {
+  "passed": true,
+  "gate": "value_range",
+  "detail": "ok"
+ },
+ {
+  "passed": true,
+  "gate": "finite_outputs",
+  "detail": "ok"
+ },
+ {
+  "passed": false,
+  "gate": "ood_success",
+  "detail": "OOD success 0.550 (threshold 0.8)"
+ },
+ {
+  "passed": true,
+  "gate": "retention",
+  "detail": "retention 0.967 (threshold 0.95)"
+ },
+ {
+  "passed": false,
+  "gate": "no_new_collisions",
+  "detail": "3 new nominal collisions (allowed 0)"
+ },
+ {
+  "passed": true,
+  "gate": "mpc_fallbacks",
+  "detail": "0 MPC fallbacks vs base 0 (allowed base + 1)"
+ }
+]

@@ -1,0 +1,39 @@
+name: ros
+
+on:
+  push:
+    paths:
+      - "ros2_ws/**"
+      - "src/**"
+      - "infra/dev/**"
+      - "configs/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ros.yml"
+  pull_request:
+    paths:
+      - "ros2_ws/**"
+      - "src/**"
+      - "infra/dev/**"
+      - "configs/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ros.yml"
+
+jobs:
+  ros-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/dev/Dockerfile.ros-dev
+          load: true
+          tags: carla-sim-ros-dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build and test ros2_ws in the Humble container
+        run: ROS_DEV_IMAGE_PREBUILT=1 bash infra/dev/run_ros_tests.sh

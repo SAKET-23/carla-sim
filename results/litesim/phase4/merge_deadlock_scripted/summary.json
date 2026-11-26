@@ -1,0 +1,16 @@
+{
+ "accepted": false,
+ "stop_reason": "max_iterations",
+ "iterations": 5,
+ "usage": {
+  "input_tokens": 0,
+  "output_tokens": 0
+ },
+ "env_steps": {
+  "gates": 277610,
+  "rollouts": 0
+ },
+ "diff": null,
+ "final_policy_hash": "9c138d3a97d271e24523c71907712290bc7b365a08ff578481017190db6df4d8",
+ "base_policy_hash": "9c138d3a97d271e24523c71907712290bc7b365a08ff578481017190db6df4d8"
+}
