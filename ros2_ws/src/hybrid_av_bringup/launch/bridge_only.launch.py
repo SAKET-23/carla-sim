@@ -40,6 +40,8 @@ def _nodes(context):
         package="hybrid_av_nodes", executable="carla_bridge", name="carla_bridge", output="screen",
         parameters=[{"town": a["town"], "scenario": a["scenario"], "seed": int(a["seed"]),
                      "quality": a["quality"], "sensors": sensors,
+                     # explicit: the bridge otherwise derives it from the rig path, which breaks for rig:=none or rigs outside configs/
+                     "routes": str(Path(_repo_rig()).parents[1] / "scenarios/carla_routes.yaml"),
                      "no_rendering": a["no_rendering"].lower() == "true"}],
     )  # fmt: skip
     static_tf = (
