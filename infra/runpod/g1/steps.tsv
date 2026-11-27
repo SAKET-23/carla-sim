@@ -1,0 +1,13 @@
+00_preflight	5	1	bash $G1_HOME/preflight.sh
+01_install_carla	40	1	install_carla.sh
+02_smoke01_gpu	5	1	bash /usr/local/share/carla-sim/smoke/01_gpu.sh
+03_smoke02_vulkan	10	1	bash /usr/local/share/carla-sim/smoke/02_vulkan.sh
+04_smoke03_carla	15	1	bash /usr/local/share/carla-sim/smoke/03_carla.sh
+05_smoke04_client	15	1	bash /usr/local/share/carla-sim/smoke/04_client.sh && cp /workspace/logs/smoke04.png $G1_DIR/
+06_repo_setup	40	1	{ [ -d /workspace/carla-sim/.git ] || git clone https://github.com/SAKET-23/carla-sim.git /workspace/carla-sim; } && git -C /workspace/carla-sim checkout $G1_REPO_SHA && uv pip install -e /workspace/carla-sim --no-deps && cd /workspace/carla-sim/ros2_ws && colcon build --symlink-install
+07_pins	15	1	{ python -c 'import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0)); x=torch.randn(1024,1024,device="cuda"); print((x@x).sum().item())' && python /workspace/carla-sim/infra/runpod/smoke/trt_check.py && python -c 'import carla, kiss_icp, onnxruntime; print(carla.__file__, kiss_icp.__version__, onnxruntime.get_device())' && source /opt/ros/humble/setup.bash && ros2 doctor --report | head -30; } > $G1_DIR/pins.txt 2>&1
+08_measure	120	0	bash $G1_HOME/measure.sh
+09_pytest_not_carla	60	0	cd /workspace/carla-sim && python -m pytest -q -m "not carla" --junitxml=$G1_DIR/pytest_not_carla.xml
+10_pytest_carla	45	0	cd /workspace/carla-sim && start_carla.sh --quality Low --town Town03 && { python -m pytest -q -m carla --junitxml=$G1_DIR/pytest_carla.xml; rc=$?; stop_carla.sh; exit $rc; }
+11_smoke05_06	45	0	bash /usr/local/share/carla-sim/smoke/05_ros.sh && bash /usr/local/share/carla-sim/smoke/06_stack.sh
+12_summary	5	0	python $G1_HOME/summary.py
