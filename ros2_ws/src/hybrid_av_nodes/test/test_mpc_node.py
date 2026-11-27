@@ -61,7 +61,8 @@ class TestMpcNode(unittest.TestCase):
         n.create_subscription(VehicleCommand, "/carla/ego/command", lambda m: cmds.append(stamp(m)), qos)
         n.create_subscription(FeatureVector, "/autonomy/features", feats.append, qos)
         end = time.monotonic() + 120
-        while time.monotonic() < end and len(cmds) < TICKS:
+        # /clock and command are separate subscriptions; spin_once serves one per call, so wait for both counts
+        while time.monotonic() < end and (len(cmds) < TICKS or len(clocks) < TICKS):
             rclpy.spin_once(n, timeout_sec=0.05)
         n.destroy_node()
         assert len(clocks) == TICKS and len(cmds) == TICKS

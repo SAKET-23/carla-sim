@@ -43,7 +43,7 @@ class LiteSimNode(Node):
         self.rng = np.random.default_rng(int(p("wheel_odom_seed", 0).value))
 
         reliable = lambda depth: QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=depth)
-        self.clock_pub = self.create_publisher(Clock, "/clock", reliable(1))
+        self.clock_pub = self.create_publisher(Clock, "/clock", reliable(10))
         self.odom_pub = self.create_publisher(Odometry, "/carla/ego/ground_truth/odom", reliable(10))
         self.objects_pub = self.create_publisher(TrackArray, "/carla/ground_truth/objects", reliable(10))
         self.context_pub = self.create_publisher(TrafficContext, "/carla/ego/traffic_context", reliable(10))
