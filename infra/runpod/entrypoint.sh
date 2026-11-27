@@ -76,7 +76,7 @@ PROFILE
   old_umask=$(umask)
   umask 077
   : > /etc/carla-sim.env
-  for var in $(compgen -e | grep -E '^(RUNPOD_|ANTHROPIC_API_KEY$|CARLA_QUALITY$)' || true); do
+  for var in $(compgen -e | grep -E '^(RUNPOD_|G1_|SMOKE_|POD_DEADLINE_EPOCH$|ANTHROPIC_API_KEY$|CARLA_QUALITY$)' || true); do
     printf 'export %s=%q\n' "$var" "${!var}" >> /etc/carla-sim.env
   done
   umask "$old_umask"

@@ -11,7 +11,7 @@ rows=$(nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,nohe
 echo "$rows"
 [ "$(echo "$rows" | wc -l)" -eq 1 ] || die "expected exactly one GPU"
 mem=$(echo "$rows" | awk -F', ' '{print $2}')
-[ "$mem" -ge 23552 ] || die "GPU has $mem MiB, need >= 23 GB"
+min=${SMOKE_MIN_VRAM_MIB:-23552}; [ "$mem" -ge "$min" ] || die "GPU has $mem MiB, need >= $min MiB"
 caps="${NVIDIA_DRIVER_CAPABILITIES:-}"
 case "$caps" in all|*graphics*) ;; *) die "NVIDIA_DRIVER_CAPABILITIES is '$caps', need all (or graphics)" ;; esac
 echo "driver: $(echo "$rows" | awk -F', ' '{print $3}')"

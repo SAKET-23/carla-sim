@@ -51,13 +51,13 @@ verify_sha() {
 mkdir -p "$DL" "$CARLA_ROOT"
 fetch CARLA_0.9.16.tar.gz
 verify_sha CARLA_0.9.16.tar.gz
-pv "$DL/CARLA_0.9.16.tar.gz" | tar -xz -C "$CARLA_ROOT"
+pv "$DL/CARLA_0.9.16.tar.gz" | tar --no-same-owner -xz -C "$CARLA_ROOT"
 if [ "$MAPS" = 1 ]; then
   fetch AdditionalMaps_0.9.16.tar.gz
-  pv "$DL/AdditionalMaps_0.9.16.tar.gz" | tar -xz -C "$CARLA_ROOT"
+  pv "$DL/AdditionalMaps_0.9.16.tar.gz" | tar --no-same-owner -xz -C "$CARLA_ROOT"
   (cd "$CARLA_ROOT" && ./ImportAssets.sh)
 fi
-chown -R carla:carla "$CARLA_ROOT"
+chown -R carla:carla "$CARLA_ROOT" 2> /dev/null || echo "install_carla: chown not supported on this volume (files are world-writable)"
 if [ "${KEEP_TARBALL:-0}" != 1 ]; then rm -f "$DL"/CARLA_0.9.16.tar.gz "$DL"/AdditionalMaps_0.9.16.tar.gz; fi
 echo 0.9.16 > "$CARLA_ROOT/.installed"
 
