@@ -25,7 +25,7 @@ fi
 # fetch <file name>: resumable download, size check against Content-Length, one retry
 fetch() {
   local name=$1 url="$BASE/$1" f="$DL/$1" want have attempt
-  want=$(curl -sIL "$url" | tr -d '\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print v+0}')
+  want=$(curl -sIL "$url" | tr -d '\r' | awk 'tolower($1)=="content-length:" {v=$2} END {print (v == "" ? 0 : v)}')
   [ "$want" -gt 0 ] || die "no Content-Length from $url"
   for attempt in 1 2; do
     wget -c --progress=dot:giga -O "$f" "$url" || true
