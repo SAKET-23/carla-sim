@@ -31,8 +31,12 @@ def build_engine(
         raise RuntimeError(f"ONNX parse failed for {onnx_path}: {errs}")
     config = builder.create_builder_config()
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, int(workspace_gb * (1 << 30)))
-    if fp16:
+    if fp16 and hasattr(trt.BuilderFlag, "FP16"):
         config.set_flag(trt.BuilderFlag.FP16)
+    elif fp16:
+        # TensorRT >= 11 is strongly typed: precision comes from the ONNX, so FP16 needs an FP16 export
+        print("build_engine: TensorRT", trt.__version__, "has no FP16 flag; building as typed in the ONNX")
+        fp16 = False
     if profiles:
         prof = builder.create_optimization_profile()
         for name, (lo, opt, hi) in profiles.items():
