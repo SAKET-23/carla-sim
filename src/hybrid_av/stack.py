@@ -78,7 +78,9 @@ class AutonomyStack:
             brake_request=bool(action.brake >= 0.5),
         )
         command = control_to_actuator(res.control, ego.vx, self.params, self.lm)
-        if action.brake >= 0.5 and ego.vx < HOLD_SPEED:  # stop request at standstill: the MPC would creep (R-30)
+        if (
+            action.brake >= 0.5 and ego.vx < HOLD_SPEED
+        ):  # stop request at standstill: the MPC would creep (R-30)
             command = ActuatorCommand(command.steer, 0.0, max(command.brake, HOLD_BRAKE))
         self.last_control = res.control
         self.extractor.lateral_target = action.delta_y

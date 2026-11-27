@@ -226,7 +226,9 @@ def test_intersection_gap_active_beyond_50m_at_speed():
 def test_stop_dist_includes_junction_give_way_line_but_stop_s_does_not():
     def feats(vx, dj, **kw):
         fx = FeatureExtractor(VehicleParams(), RouteBuilder.straight(300, 13.89))
-        return fx.extract(_obs(ego=EgoState(0, 50, 0, 0, vx, 0, 0), dist_to_junction=dj, **kw), Control(0, 0), 0.05)
+        return fx.extract(
+            _obs(ego=EgoState(0, 50, 0, 0, vx, 0, 0), dist_to_junction=dj, **kw), Control(0, 0), 0.05
+        )
 
     f = feats(5.0, 30.0)
     assert f.raw[I_STOP_DIST] == 30.0 and f.stop_s is None  # the reference never stops at a give-way line

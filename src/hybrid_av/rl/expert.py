@@ -24,8 +24,12 @@ EXPERT_BRAKE_STANDOFF = 5.0  # m, stopping distance margin (obstacle half-plane 
 EXPERT_MIN_GAP = 1.0  # s, junction commit threshold on intersection_gap
 EXPERT_JUNCTION_WAIT_DIST = 6.0  # m before the junction entry where it waits
 EXPERT_JUNCTION_DECEL = 1.0  # m/s², planning decel; the MPC realises ~1.45 under the 2.0 ramped reference
-EXPERT_JUNCTION_STOP_DECEL = 1.45  # m/s², decel the MPC actually realises: decides whether the entry is still stoppable
-EXPERT_ABORT_GAP = 0.0  # s, once moving the expert only aborts a launch when intersection_gap falls below this
+EXPERT_JUNCTION_STOP_DECEL = (
+    1.45  # m/s², decel the MPC actually realises: decides whether the entry is still stoppable
+)
+EXPERT_ABORT_GAP = (
+    0.0  # s, once moving the expert only aborts a launch when intersection_gap falls below this
+)
 EXPERT_HOLD_SPEED = 1.0  # m/s, brake hold applies below this speed
 EXPERT_COMMIT_SPEED = 0.3  # m/s, hysteresis stopped/moving split: above this a launch is committed
 _LEAD_RANGE, _GAP_ABSENT = 80.0, 10.0
@@ -62,10 +66,17 @@ class ExpertPolicy:
         gap = f[I_INTERSECTION_GAP]
         min_gap = EXPERT_MIN_GAP if vx < EXPERT_COMMIT_SPEED else EXPERT_ABORT_GAP  # commit/abort hysteresis
         can_stop = vx**2 / (2.0 * EXPERT_JUNCTION_STOP_DECEL) < frame.dist_to_junction  # past this, no abort
-        if can_stop and frame.dist_to_junction <= junction_range(f[I_VX]) and gap < _GAP_ABSENT and gap < min_gap:
+        if (
+            can_stop
+            and frame.dist_to_junction <= junction_range(f[I_VX])
+            and gap < _GAP_ABSENT
+            and gap < min_gap
+        ):
             d = max(frame.dist_to_junction - EXPERT_JUNCTION_WAIT_DIST, 0.0)
             alpha = min(alpha, np.sqrt(2.0 * EXPERT_JUNCTION_DECEL * d) / limit)
-            if vx < EXPERT_HOLD_SPEED and gap < 0.0:  # stopped with a cross car ahead of its clear time: the MPC would creep
+            if (
+                vx < EXPERT_HOLD_SPEED and gap < 0.0
+            ):  # stopped with a cross car ahead of its clear time: the MPC would creep
                 brake = 1.0
         if f[I_PED_DIST] < 30.0 and ped_ahead < np.radians(30):
             alpha = min(alpha, 0.5)

@@ -92,7 +92,9 @@ class FeatureExtractor:
         stops.append(ctx.dist_to_stop_sign)
         stops = [d for d in stops if np.isfinite(d) and d >= 0.0]
         stop_s = front_s + min(stops) if stops else None
-        give_way = [ctx.dist_to_junction] if ctx.dist_to_junction <= junction_range(ego.vx) else []  # slot 23 only, never stop_s
+        give_way = (
+            [ctx.dist_to_junction] if ctx.dist_to_junction <= junction_range(ego.vx) else []
+        )  # slot 23 only, never stop_s
 
         raw = np.array(
             [

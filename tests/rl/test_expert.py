@@ -34,11 +34,15 @@ def test_expert_waits_then_goes_at_junction():  # waiting is via alpha_v (ppo-tr
     near = {"cross_veh_dist": 30.0, "cross_veh_speed": 10.0, "cross_veh_ttc": 3.0}
     wait = ExpertPolicy()(
         None,
-        _frame(vx=0.2, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=EXPERT_MIN_GAP - 1.0, **near),
+        _frame(
+            vx=0.2, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=EXPERT_MIN_GAP - 1.0, **near
+        ),
     )
     go = ExpertPolicy()(
         None,
-        _frame(vx=2.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=EXPERT_MIN_GAP + 1.0, **near),
+        _frame(
+            vx=2.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=EXPERT_MIN_GAP + 1.0, **near
+        ),
     )
     assert wait.alpha_v == 0.0 and wait.brake < 0.5 and go.alpha_v == 1.0 and go.brake < 0.5
 
@@ -46,8 +50,18 @@ def test_expert_waits_then_goes_at_junction():  # waiting is via alpha_v (ppo-tr
 def test_expert_holds_brake_when_stopped_at_junction_with_cross_car_ahead_of_it():
     held = _frame(vx=0.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST - 3.0, intersection_gap=-3.0)
     assert ExpertPolicy()(None, held).brake == 1.0
-    assert ExpertPolicy()(None, _frame(vx=0.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST - 3.0, intersection_gap=0.5)).brake == 0.0
-    assert ExpertPolicy()(None, _frame(vx=3.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=-3.0)).brake == 0.0
+    assert (
+        ExpertPolicy()(
+            None, _frame(vx=0.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST - 3.0, intersection_gap=0.5)
+        ).brake
+        == 0.0
+    )
+    assert (
+        ExpertPolicy()(
+            None, _frame(vx=3.0, dist_to_junction=EXPERT_JUNCTION_WAIT_DIST, intersection_gap=-3.0)
+        ).brake
+        == 0.0
+    )
 
 
 def test_expert_junction_stop_planned_at_junction_decel():
@@ -104,9 +118,18 @@ def test_expert_commit_hysteresis_while_moving():
 
     d = EXPERT_JUNCTION_WAIT_DIST + 6.0
     mid = EXPERT_ABORT_GAP + 0.5  # below the commit gap, above the abort gap
-    assert ExpertPolicy()(None, _frame(vx=0.0, dist_to_junction=d, intersection_gap=mid)).alpha_v < 1.0  # stopped: wait
-    assert ExpertPolicy()(None, _frame(vx=1.5, dist_to_junction=d, intersection_gap=mid)).alpha_v == 1.0  # moving: continue
-    assert ExpertPolicy()(None, _frame(vx=1.5, dist_to_junction=d, intersection_gap=EXPERT_ABORT_GAP - 0.5)).alpha_v < 1.0
+    assert (
+        ExpertPolicy()(None, _frame(vx=0.0, dist_to_junction=d, intersection_gap=mid)).alpha_v < 1.0
+    )  # stopped: wait
+    assert (
+        ExpertPolicy()(None, _frame(vx=1.5, dist_to_junction=d, intersection_gap=mid)).alpha_v == 1.0
+    )  # moving: continue
+    assert (
+        ExpertPolicy()(
+            None, _frame(vx=1.5, dist_to_junction=d, intersection_gap=EXPERT_ABORT_GAP - 0.5)
+        ).alpha_v
+        < 1.0
+    )
 
 
 def test_expert_commit_speed_is_below_hold_speed():

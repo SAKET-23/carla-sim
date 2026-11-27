@@ -16,4 +16,6 @@ class SegWriter:
 
     def write_pair(self, idx: int, rgb: np.ndarray, tags: np.ndarray) -> None:
         Image.fromarray(np.asarray(rgb, np.uint8)).save(self.root / f"images/{idx:06d}.png")
-        Image.fromarray(CARLA_TAG_TO_TRAIN[np.asarray(tags, np.uint8)]).save(self.root / f"labels/{idx:06d}.png")
+        Image.fromarray(CARLA_TAG_TO_TRAIN[np.asarray(tags, np.uint8)]).save(
+            self.root / f"labels/{idx:06d}.png"
+        )

@@ -29,11 +29,15 @@ def test_wet_curve_ramp_on_surface_cue(seeded_policy):
     assert len(plan.edits) == 93 and "fc1.weight" in {e.tensor for e in plan.edits}
     assert any(e.index[1] == 7 for e in plan.edits if e.tensor == "fc1.weight" and e.value != 0)  # f* = 7
     r = evaluate_plan_offline(seeded_policy, plan, b.Z_window, b.Z_nom)
-    assert r["fail_mean_shift"]["brake"] >= 0.5 and abs(r["fail_mean_shift"]["alpha_v"]) < 1e-3  # brake-routed
+    assert (
+        r["fail_mean_shift"]["brake"] >= 0.5 and abs(r["fail_mean_shift"]["alpha_v"]) < 1e-3
+    )  # brake-routed
     assert r["nom_max_abs_shift"]["brake"] < 1e-5
     assert max(abs(e.value) for e in plan.edits) <= 3.0
     fc1 = {tuple(e.index): e.value for e in plan.edits if e.tensor == "fc1.weight" and e.value != 0}
-    assert next(e.value for e in plan.edits if e.tensor == "fc3.weight" and e.index[0] == 2) == 3.0  # saturating
+    assert (
+        next(e.value for e in plan.edits if e.tensor == "fc3.weight" and e.index[0] == 2) == 3.0
+    )  # saturating
     assert {c for _, c in fc1} == {0, 7}  # gated on speed and roughness
 
 
