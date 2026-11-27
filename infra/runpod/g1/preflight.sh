@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # G1 step 00: host checks. Exit 20 = host GPU fault (replace the host), 1 = config problem, 0 = ok.
 # Writes $G1_DIR/hostinfo.json either way. G1_WORKSPACE / G1_MIN_FREE_GB are test hooks.
+# G1_EXPECT_GPU: substring the GPU name must contain (default 4090).
 set -euo pipefail
 
 G1_DIR=${G1_DIR:-/workspace/g1}
@@ -30,7 +31,7 @@ free_gb=$(df -BG --output=avail "$WS" | awk 'NR==2 {gsub("G", "", $1); print $1}
 fail=0
 bad() { echo "preflight FAIL: $*" >&2; fail=1; }
 [ "${driver%%.*}" -ge 580 ] || bad "driver $driver is below 580 (R-33)"
-case "$gpu" in *4090*) ;; *) bad "GPU is '$gpu', expected an RTX 4090" ;; esac
+exp=${G1_EXPECT_GPU:-4090}; case "$gpu" in *"$exp"*) ;; *) bad "GPU is '$gpu', expected '$exp'" ;; esac
 [ "$free_gb" -ge "$MIN_FREE" ] || bad "$WS has ${free_gb} GB free, need $MIN_FREE"
 [ "${NVIDIA_DRIVER_CAPABILITIES:-}" = all ] || bad "NVIDIA_DRIVER_CAPABILITIES is '${NVIDIA_DRIVER_CAPABILITIES:-}', expected all"
 [ -n "${POD_DEADLINE_EPOCH:-}" ] || bad "POD_DEADLINE_EPOCH is unset"

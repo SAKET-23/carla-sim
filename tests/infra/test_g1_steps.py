@@ -47,6 +47,22 @@ def test_preflight_writes_hostinfo(tmp_path):
     assert {"vcpu", "ram_gb", "workspace_free_gb"} <= set(h)
 
 
+def test_preflight_expect_gpu_env_overrides(tmp_path):
+    b = tmp_path / "bin"
+    _smi(b, name="NVIDIA RTX 4000 Ada Generation")
+    stub(b, "python", 'echo "2.14.1 12.8 1.0"')
+    r = run(G1 / "preflight.sh", [], _pre_env(tmp_path, G1_EXPECT_GPU="RTX 4000 Ada"), b)
+    assert r.returncode == 0, r.stderr
+
+
+def test_preflight_default_expects_4090(tmp_path):
+    b = tmp_path / "bin"
+    _smi(b, name="NVIDIA RTX 4000 Ada Generation")
+    stub(b, "python", 'echo "2.14.1 12.8 1.0"')
+    r = run(G1 / "preflight.sh", [], _pre_env(tmp_path), b)
+    assert r.returncode == 1 and "expected '4090'" in r.stderr
+
+
 def test_preflight_cuda_fault_exits_20(tmp_path):
     b = tmp_path / "bin"
     _smi(b)
