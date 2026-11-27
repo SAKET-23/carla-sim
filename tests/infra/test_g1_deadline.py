@@ -37,7 +37,8 @@ def test_deadline_stops_without_mac(tmp_path):
     b, env = _env(tmp_path, DEADLINE)
     assert run(G1 / "deadline.sh", [], env, b).returncode == 0
     (line,) = calls(b, "curl")
-    assert "-X POST" in line and "https://rest.runpod.io/v1/pods/abc/stop" in line
+    assert "-X POST" in line and "https://api.runpod.io/v2/pods/abc/action" in line
+    assert '"action":"stop"' in line
     assert "Authorization: Bearer rpa_TESTKEY" in line
 
 

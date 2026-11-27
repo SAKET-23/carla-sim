@@ -20,7 +20,7 @@ fi
 stop_pod() {
   local code
   code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $RUNPOD_API_KEY" \
-    "https://rest.runpod.io/v1/pods/${RUNPOD_POD_ID:-}/stop") || code=000
+    -H "Content-Type: application/json" -d '{"action":"stop"}' "https://api.runpod.io/v2/pods/${RUNPOD_POD_ID:-}/action") || code=000
   log "stop call returned HTTP $code"
   [ "$code" = 200 ]
 }

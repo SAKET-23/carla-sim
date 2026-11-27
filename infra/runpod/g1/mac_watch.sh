@@ -29,7 +29,7 @@ fi
 OUT=${OUT:-$HOME/carla-g1/$POD}
 PY=${G1_PY:-python3}
 NOW_CMD=${G1_NOW_CMD:-date +%s}
-API=https://rest.runpod.io/v1/pods/$POD
+API=https://api.runpod.io/v2/pods/$POD
 mkdir -p "$OUT"
 
 now() { eval "$NOW_CMD"; }
@@ -66,16 +66,16 @@ summary_done() {
     "$OUT/state.json" 2> /dev/null
 }
 
-stop_pod() { # final sync (may fail), POST stop, poll until EXITED
+stop_pod() { # final sync (may fail), POST stop action, poll status until EXITED
   sync_g1 || log "ALERT final sync failed (continuing to stop)"
   if [ -n "$DRY" ]; then log "DRY-RUN: would stop $POD"; return 0; fi
   local key code body i=0
   key=$(security find-generic-password -s runpod-api -w) || { log "ALERT cannot read the runpod-api key from the Keychain"; return 1; }
   while [ "$i" -lt 30 ]; do
-    code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H @- "$API/stop" <<< "Authorization: Bearer $key") || code=000
+    code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H @- -H "Content-Type: application/json" -d '{"action":"stop"}' "$API/action" <<< "Authorization: Bearer $key") || code=000
     log "stop call returned HTTP $code"
     body=$(curl -sS -H @- "$API" <<< "Authorization: Bearer $key") || body=
-    case "$body" in *'"desiredStatus"'*EXITED*) log "STOPPED $POD"; return 0 ;; esac
+    case "${body// /}" in *'"status":"EXITED"'*) log "STOPPED $POD"; return 0 ;; esac
     i=$((i + 1))
     sleep "${G1_POLL_S:-10}"
   done
