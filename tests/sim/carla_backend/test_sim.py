@@ -146,6 +146,43 @@ def test_red_light_violation_uses_precomputed_lights(fake_carla):
     assert not sim.step(IDLE)[1].red_light_violation
 
 
+def _tl(world, x=None):
+    import carla
+
+    light = world.spawn_actor(carla.ActorBlueprint("traffic.traffic_light"), carla.Transform())
+    if x is not None:
+        light.stop_waypoints = [carla.Waypoint(carla.Transform(carla.Location(x, 0.0, 0.0)))]
+    return light
+
+
+def test_light_group_timings_make_ego_red_last_the_cycle_red(fake_carla):
+    world = fake_carla.last_world
+    ego, *others = group = [_tl(world, 30.0)] + [_tl(world) for _ in range(3)]
+    for lt in group:
+        lt.group = group
+    _sim().reset(straight_nominal(controls=(TrafficControl("light", 30.0),)))
+    assert (ego.green, ego.yellow) == (10.0, 3.0)
+    for o in others:
+        assert (o.green, o.yellow) == (pytest.approx(max(10 / 3 - 1, 0.5)), 1.0)
+    assert ego.group_resets >= 1
+
+
+def test_unmatched_route_light_gets_default_group_timings(fake_carla):
+    world = fake_carla.last_world
+    lone = _tl(world, 30.0)
+    sim = _sim()
+    sim.reset(straight_nominal(controls=()))
+    assert (lone.green, lone.yellow) == (10.0, 3.0) and lone.group_resets >= 1
+
+
+def test_unmatched_route_light_uses_first_light_cycle(fake_carla):
+    world = fake_carla.last_world
+    near, far = _tl(world, 30.0), _tl(world, 60.0)
+    ctl = TrafficControl("light", 30.0, cycle=(8.0, 2.0, 6.0))
+    _sim().reset(straight_nominal(controls=(ctl,)))
+    assert (far.green, far.yellow) == (8.0, 2.0)
+
+
 def test_stop_sign_rule_is_litesims(fake_carla):
     sim = _sim()
     sim.reset(straight_nominal(controls=(TrafficControl("stop_sign", 30.0),)))

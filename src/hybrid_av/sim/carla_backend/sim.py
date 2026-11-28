@@ -233,13 +233,28 @@ class CarlaSim:
             LibLight.GREEN: carla.TrafficLightState.Green,
             LibLight.YELLOW: carla.TrafficLightState.Yellow,
         }
-        for c in (c for c in sc.controls if c.kind == "light" and self._lights):
-            light = min(self._lights, key=lambda lo: abs(lo.stop_s - c.s)).light
-            light.set_green_time(c.cycle[0])
-            light.set_yellow_time(c.cycle[1])
-            light.set_red_time(c.cycle[2])
-            # shortcut: initial colour from the cycle phase only; the elapsed time inside the phase is not set
-            light.set_state(state.get(light_state(c, 0.0), carla.TrafficLightState.Red))
+        lights = [c for c in sc.controls if c.kind == "light"]
+        matched = {}
+        for c in lights if self._lights else ():
+            matched[id(min(self._lights, key=lambda lo: abs(lo.stop_s - c.s)))] = c
+        default = lights[0].cycle if lights else (10.0, 3.0, 10.0)
+        for lo in self._lights:
+            g, y, r = matched[id(lo)].cycle if id(lo) in matched else default
+            # a junction's lights cycle in turn, so the ego light's red is the others' green+yellow: shape it to r
+            others = [o for o in lo.light.get_group_traffic_lights() if o.id != lo.light.id]
+            for o in others:
+                o.set_green_time(max(r / len(others) - 1.0, 0.5))
+                o.set_yellow_time(1.0)
+            lo.light.set_green_time(g)
+            lo.light.set_yellow_time(y)
+            lo.light.set_red_time(r)
+        for lo in self._lights:
+            lo.light.reset_group()
+        for lo in self._lights:  # last: reset_group restores the group's initial state
+            if id(lo) in matched:
+                c = matched[id(lo)]
+                # shortcut: initial colour from the cycle phase only; the elapsed time inside the phase is not set
+                lo.light.set_state(state.get(light_state(c, 0.0), carla.TrafficLightState.Red))
 
     # --- per tick -----------------------------------------------------
     def _on_collision(self, event) -> None:

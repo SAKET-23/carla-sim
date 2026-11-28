@@ -325,6 +325,15 @@ class TrafficLight(Actor):
     def set_red_time(self, t):
         self.red = t
 
+    group = None  # test hook: what get_group_traffic_lights returns (default: just this light)
+    group_resets = 0
+
+    def get_group_traffic_lights(self):
+        return list(self.group or [self])
+
+    def reset_group(self):
+        self.group_resets += 1
+
     stop_waypoints = ()  # test hook: what get_stop_waypoints returns
 
     def get_stop_waypoints(self):

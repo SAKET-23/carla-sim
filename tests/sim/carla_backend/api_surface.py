@@ -199,6 +199,7 @@ API_SURFACE: frozenset[str] = frozenset(
     )
     | _cls(
         "TrafficLight",
+        "id",
         "state",
         "get_state",
         "set_state",
@@ -206,6 +207,8 @@ API_SURFACE: frozenset[str] = frozenset(
         "set_green_time",
         "set_yellow_time",
         "set_red_time",
+        "get_group_traffic_lights",
+        "reset_group",
         "get_stop_waypoints",
         "get_elapsed_time",
     )
