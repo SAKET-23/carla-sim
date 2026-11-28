@@ -240,14 +240,16 @@ class CarlaSim:
         default = lights[0].cycle if lights else (10.0, 3.0, 10.0)
         for lo in self._lights:
             g, y, r = matched[id(lo)].cycle if id(lo) in matched else default
-            # a junction's lights cycle in turn, so the ego light's red is the others' green+yellow: shape it to r
+            # CARLA's group cycle gives each member green+yellow+its own red (all-red clearance), so the ego's
+            # red is the others' (g+y+r) plus its own r: use a 0.5 s clearance and shape the others' green to total r
             others = [o for o in lo.light.get_group_traffic_lights() if o.id != lo.light.id]
             for o in others:
-                o.set_green_time(max(r / len(others) - 1.0, 0.5))
+                o.set_green_time(max((r - 0.5) / len(others) - 1.5, 0.5))
                 o.set_yellow_time(1.0)
+                o.set_red_time(0.5)
             lo.light.set_green_time(g)
             lo.light.set_yellow_time(y)
-            lo.light.set_red_time(r)
+            lo.light.set_red_time(0.5 if others else r)
         for lo in self._lights:
             lo.light.reset_group()
         for lo in self._lights:  # last: reset_group restores the group's initial state

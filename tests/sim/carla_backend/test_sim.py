@@ -161,9 +161,9 @@ def test_light_group_timings_make_ego_red_last_the_cycle_red(fake_carla):
     for lt in group:
         lt.group = group
     _sim().reset(straight_nominal(controls=(TrafficControl("light", 30.0),)))
-    assert (ego.green, ego.yellow) == (10.0, 3.0)
-    for o in others:
-        assert (o.green, o.yellow) == (pytest.approx(max(10 / 3 - 1, 0.5)), 1.0)
+    assert (ego.green, ego.yellow, ego.red) == (10.0, 3.0, 0.5)
+    for o in others:  # ego red = 3 x (green + 1.0 + 0.5) + 0.5 = 10
+        assert (o.green, o.yellow, o.red) == (pytest.approx(9.5 / 3 - 1.5), 1.0, 0.5)
     assert ego.group_resets >= 1
 
 
@@ -172,7 +172,7 @@ def test_unmatched_route_light_gets_default_group_timings(fake_carla):
     lone = _tl(world, 30.0)
     sim = _sim()
     sim.reset(straight_nominal(controls=()))
-    assert (lone.green, lone.yellow) == (10.0, 3.0) and lone.group_resets >= 1
+    assert (lone.green, lone.yellow, lone.red) == (10.0, 3.0, 10.0) and lone.group_resets >= 1
 
 
 def test_unmatched_route_light_uses_first_light_cycle(fake_carla):
