@@ -112,7 +112,7 @@ def test_blocked_timeout(make_sim, points):
             first = k
     assert first is not None and 3600 <= first <= 3610
     sim2 = make_sim(no_rendering=True)  # a short time limit: timeout fires at t >= limit
-    sim2.reset(dataclasses.replace(plain_scenario(straight_route(points, "Town03")), time_limit=5.0))
+    sim2.reset(dataclasses.replace(plain_scenario(straight_route(points, "Town03_Opt")), time_limit=5.0))
     infos = [sim2.step(ActuatorCommand(0.0, 0.0, 1.0))[1] for _ in range(110)]
     assert not infos[90].timeout and infos[105].timeout
 

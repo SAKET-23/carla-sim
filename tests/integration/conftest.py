@@ -44,7 +44,7 @@ def make_sim(carla_server):
     sims = []
 
     def make(**kw):
-        sim = CarlaSim(CarlaSimConfig(**{"town": "Town03", "sensors": None, **kw}))
+        sim = CarlaSim(CarlaSimConfig(**{"town": "Town03_Opt", "sensors": None, **kw}))
         sims.append(sim)
         return sim
 

@@ -8,7 +8,7 @@ from tests.infra.g1util import ROOT, run
 G2 = ROOT / "infra" / "runpod" / "g2"
 RIG = ROOT / "configs" / "sensors" / "carla_rig.yaml"
 ALL = ["A_norender", "none", "cameras", "cameras_lidar", "full", "full_lidar_light"]
-HEADER = "profile,tick_hz,carla_cpu_cores,bridge_cpu_cores,pod_cpu_cores,throttled_pct,gpu_mem_peak_mib"
+HEADER = "profile,tick_hz,carla_cpu_cores,bridge_cpu_cores,pod_cpu_cores,throttled_pct,gpu_mem_peak_mib,gpu_util_mean_pct"
 
 
 def _ladder(tmp_path, **env):
@@ -28,7 +28,7 @@ def _sensors(tmp_path, profile):
 def test_dry_run_writes_all_rows(tmp_path):
     rows = _ladder(tmp_path)
     assert rows[0] == HEADER and [r.split(",")[0] for r in rows[1:]] == ALL
-    assert all(len(r.split(",")) == 7 for r in rows)
+    assert all(len(r.split(",")) == 8 for r in rows)
 
 
 def test_profiles_subset(tmp_path):
@@ -50,3 +50,12 @@ def test_rig_subsets(tmp_path):
     assert len(light) == 8
     assert light["lidar"]["attributes"]["channels"] == "32"
     assert light["lidar"]["attributes"]["points_per_second"] == "600000"
+
+
+def test_camera_test_rigs(tmp_path):
+    assert set(_sensors(tmp_path, "cam_rgb")) == {"camera_front", "imu"}
+    for prof, (w, h) in {"cam_540": ("960", "540"), "cam_360": ("640", "360")}.items():
+        cams = [s for i, s in _sensors(tmp_path, prof).items() if i.startswith("camera")]
+        assert len(cams) == 2 and all(
+            c["attributes"]["image_size_x"] == w and c["attributes"]["image_size_y"] == h for c in cams
+        )

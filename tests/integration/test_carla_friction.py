@@ -20,7 +20,7 @@ def _zone_run(make_sim, points, with_other=False):
     import carla
 
     sim = make_sim()
-    sc = plain_scenario(straight_route(points, "Town03", 150.0), 5.0, (FrictionZone(20.0, 60.0, 0.35),))
+    sc = plain_scenario(straight_route(points, "Town03_Opt", 150.0), 5.0, (FrictionZone(20.0, 60.0, 0.35),))
     obs = sim.reset(sc)
     other = None
     if with_other:
@@ -67,7 +67,7 @@ def test_low_friction_limits_lateral_accel(make_sim, points):
     from hybrid_av.vehicle.params import VehicleParams
 
     sim = make_sim(no_rendering=True)
-    rc = cal.circle_start(points, "Town03")
+    rc = cal.circle_start(points, "Town03_Opt")
     params = VehicleParams(max_steer_wheel=0.7)
     dry = cal.circle_run(sim, rc, 1.0, params, LongitudinalMap())
     wet = cal.circle_run(

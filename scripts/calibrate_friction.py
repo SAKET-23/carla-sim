@@ -98,7 +98,7 @@ def main(argv=None) -> None:
         "--longitudinal-map", type=Path, default=Path("configs/vehicle/carla_model3_longitudinal.yaml")
     )
     ap.add_argument("--fixture", type=Path, default=FIXTURE)
-    ap.add_argument("--town", default="Town03")
+    ap.add_argument("--town", default="Town03_Opt")
     ap.add_argument("--repeats", type=int, default=3)
     ap.add_argument(
         "--runs", type=Path, default=Path("runs") / f"{time.strftime('%Y%m%d-%H%M%S')}_calibration"

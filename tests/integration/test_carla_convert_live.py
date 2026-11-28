@@ -15,7 +15,7 @@ pytestmark = pytest.mark.carla
 def test_pose_matches_transform(make_sim, points):
     """IC-05 — see Plan/06-integration/integration-check.md; likely fix: ECC-04."""
     x, y, z, _ = points["straight"]
-    rc = straight_route(points, "Town03") | {"start": [x, y, z, 30.0]}
+    rc = straight_route(points, "Town03_Opt") | {"start": [x, y, z, 30.0]}
     obs = make_sim().reset(plain_scenario(rc))
     assert obs.ego.x == pytest.approx(x, abs=1e-3)
     assert obs.ego.y == pytest.approx(-y, abs=1e-3)
@@ -30,7 +30,7 @@ def left_turn(carla_server, points):
 
     sim = CarlaSim(CarlaSimConfig(sensors=RIG))
     try:
-        obs = sim.reset(plain_scenario(straight_route(points, "Town03"), 8.0))
+        obs = sim.reset(plain_scenario(straight_route(points, "Town03_Opt"), 8.0))
         drv = Driver(sim, 8.0, 0.2)
         start, rec = obs.ego, {"ego": [], "steer": [], "wz_raw": [], "ay": [], "gz": []}
         for _ in range(60):

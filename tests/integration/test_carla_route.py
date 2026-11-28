@@ -19,7 +19,7 @@ pytestmark = pytest.mark.carla
 
 @pytest.fixture(scope="module")
 def pairs(carla_server):
-    _, world = connect(CarlaSimConfig(town="Town03"))
+    _, world = connect(CarlaSimConfig(town="Town03_Opt"))
     return town03_pairs(world)
 
 
@@ -33,7 +33,7 @@ def test_route_from_planner(make_sim, pairs):
             x, y, _ = convert.loc_to_lib(wp.transform.location.x, wp.transform.location.y, 0.0)
             assert abs(route.project(x, y).lateral) < 0.05
         sim = make_sim()
-        obs = sim.reset(plain_scenario({"town": "Town03", "start": start, "goal": goal}))
+        obs = sim.reset(plain_scenario({"town": "Town03_Opt", "start": start, "goal": goal}))
         assert abs(sim.route().project(obs.ego.x, obs.ego.y).lateral) < 0.5
         sim.close()
 
@@ -62,7 +62,7 @@ def test_speed_limits(make_sim, pairs):
     """IC-18 — see Plan/06-integration/integration-check.md; likely fix: ECC-14."""
     start, goal, _ = pairs[0]
     sim = make_sim()
-    sc = plain_scenario({"town": "Town03", "start": start, "goal": goal})
+    sc = plain_scenario({"town": "Town03_Opt", "start": start, "goal": goal})
     agree = total = 0
     for _, feats in _drive_constant_action(sim, sc, 600):
         reported = sim.ego.get_speed_limit()  # km/h, 0 when unknown
@@ -76,7 +76,7 @@ def test_lane_width_and_junctions(make_sim, pairs):
     """IC-19 — see Plan/06-integration/integration-check.md; likely fix: ECC-14."""
     for start, goal, wps in pairs:
         sim = make_sim()
-        sim.reset(plain_scenario({"town": "Town03", "start": start, "goal": goal}))
+        sim.reset(plain_scenario({"town": "Town03_Opt", "start": start, "goal": goal}))
         s = chord_s(wps)
         width = sim.route().sample(s)["lane_width"]
         assert np.max(np.abs(width - [wp.lane_width for wp in wps])) < 0.05
@@ -93,7 +93,7 @@ def test_traffic_context_lights(make_sim, points):
     import carla
 
     sim = make_sim()
-    _, world = connect(CarlaSimConfig(town="Town03"))
+    _, world = connect(CarlaSimConfig(town="Town03_Opt"))
     rc, _, stop = signalised_route(world, points)
     obs = sim.reset(plain_scenario(rc, 6.0))
     drv = Driver(sim, 6.0)

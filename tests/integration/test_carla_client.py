@@ -53,7 +53,7 @@ def test_close_restores_async_and_destroys_actors(make_sim, points):
 
     world = carla.Client("localhost", 2000).get_world()
     before = len(world.get_actors())
-    rc = straight_route(points, "Town03")
+    rc = straight_route(points, "Town03_Opt")
     for _ in range(2):  # a second reset() -> close() cycle leaves the actor count where it started
         sim = make_sim(sensors=None)
         sim.reset(plain_scenario(rc))
@@ -66,7 +66,7 @@ def test_close_restores_async_and_destroys_actors(make_sim, points):
 def test_reset_time(make_sim, points):
     """IC-04 — see Plan/06-integration/integration-check.md; likely fix: ECC-03."""
     sim = make_sim(sensors=None)
-    sc = plain_scenario(straight_route(points, "Town03"))
+    sc = plain_scenario(straight_route(points, "Town03_Opt"))
     sim.reset(sc)  # loads the town
     t0 = time.monotonic()
     obs = sim.reset(sc)

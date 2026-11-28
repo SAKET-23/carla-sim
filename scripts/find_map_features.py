@@ -1,6 +1,6 @@
 """Search a CARLA town for the places the calibration and integration tests need.
 
-find_map_features.py --town Town03 [--fixture tests/integration/fixtures/town03_points.yaml]
+find_map_features.py --town Town03_Opt [--fixture tests/integration/fixtures/town03_points.yaml]
 Prints curves with R in [28, 35] m and unsignalised T-junctions with CARLA start/goal coordinates for
 Scenario.carla_route. With --fixture it also writes the integration-test fixture: `straight` ([x, y, z, yaw], start
 of a >= 200 m flat straight), `open_area` ([x, y, z], centre of a free disc of radius >= 35 m) and

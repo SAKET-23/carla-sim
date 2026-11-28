@@ -8,7 +8,11 @@ import yaml
 KEEP = {
     "cameras": {"camera_front", "camera_front_semantic", "imu"},
     "cameras_lidar": {"camera_front", "camera_front_semantic", "imu", "lidar"},
+    "cam_rgb": {"camera_front", "imu"},
+    "cam_540": {"camera_front", "camera_front_semantic", "imu"},
+    "cam_360": {"camera_front", "camera_front_semantic", "imu"},
 }
+RES = {"cam_540": ("960", "540"), "cam_360": ("640", "360")}
 LIGHT = {"channels": "32", "points_per_second": "600000"}
 
 
@@ -18,6 +22,9 @@ def subset(rig: dict, profile: str) -> dict:
         for s in sensors:
             if s["id"] == "lidar":
                 s["attributes"].update(LIGHT)
+    for s in sensors:
+        if profile in RES and s["id"].startswith("camera"):
+            s["attributes"]["image_size_x"], s["attributes"]["image_size_y"] = RES[profile]
     return {"sensors": sensors}
 
 

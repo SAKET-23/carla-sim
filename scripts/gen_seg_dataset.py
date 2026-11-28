@@ -1,6 +1,6 @@
 """Generate the segmentation dataset (Plan/03-models/segmentation.md §3): RGB and semantic camera, same pose and frame.
 
-gen_seg_dataset.py --towns Town01,Town03,Town04,Town05 --frames-per-town 1500 --split train --out DIR --quality Low
+gen_seg_dataset.py --towns Town01,Town03_Opt,Town04,Town05 --frames-per-town 1500 --split train --out DIR --quality Low
 (then `--towns Town02 --frames-per-town 800 --split val`, `--towns Town10HD --frames-per-town 1000 --split test`).
 The server's quality level is not readable through the API: start_carla.sh writes it to
 <quality-dir>/carla-<port>.quality, and this script exits 2 if that file is missing or differs from --quality (ECC-26).

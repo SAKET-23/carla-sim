@@ -21,7 +21,7 @@ def _close_sims(fake_carla):
 def _reset(routes_yaml, tmp_path, seed, family="nominal"):
     f = tmp_path / "routes.yaml"
     f.write_text(yaml.safe_dump(routes_yaml))
-    sc = carla_scenario(make_scenario(family, seed), family, seed, "Town03", f, fallback=True)
+    sc = carla_scenario(make_scenario(family, seed), family, seed, "Town03_Opt", f, fallback=True)
     sim = CarlaSim(CarlaSimConfig(sensors=None))
     _open.append(sim)
     sim.reset(sc)
@@ -43,7 +43,7 @@ def test_fallback_used_when_no_route(fake_carla, tmp_path, caplog):
 
 
 def test_configured_route_wins(fake_carla, tmp_path, caplog):
-    table = {"nominal": {"town": "Town03", "start": [0, 0, 0, 0], "goal": [100, 0, 0]}}
+    table = {"nominal": {"town": "Town03_Opt", "start": [0, 0, 0, 0], "goal": [100, 0, 0]}}
     with caplog.at_level(logging.WARNING):
         sim = _reset(table, tmp_path, seed=0)
     assert sim.route().length == pytest.approx(100.0, abs=1.0) and not caplog.text

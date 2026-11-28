@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# G1 step 08: peak VRAM / RAM, mean CPU and /clock tick rate for {Town03, Town10HD} x {Low, Epic}, then the RL-mode row.
+# G1 step 08: peak VRAM / RAM, mean CPU and /clock tick rate for {Town03_Opt, Town10HD} x {Low, Epic}, then the RL-mode row.
 # Writes $G1_DIR/vram.csv (a row is replaced if its town,quality key already exists). A failing config gets
 # `error=<reason>` in the gpu_mem_peak_mib column and the next one still runs.
 # Test hooks: G1_MEASURE_DRY=1 (fake numbers, no CARLA), G1_REPO (default /workspace/carla-sim).
@@ -49,7 +49,7 @@ measure() {
   echo "$gpu,$ram,$(awk -v s="$cpu_sum" -v n="$n" 'BEGIN {printf "%.1f", s / (n ? n : 1)}'),$rate,$ticks"
 }
 
-for town in Town03 Town10HD; do
+for town in Town03_Opt Town10HD; do
   for q in Low Epic; do
     if out=$(measure "$town" "$q" 2> "$G1_DIR/logs/measure-err.txt"); then
       put_row "$town" "$q" "$town,$q,$out"

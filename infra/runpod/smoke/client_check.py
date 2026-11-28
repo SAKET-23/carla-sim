@@ -1,6 +1,6 @@
 """Smoke 04 (runbook.md section 4): server and client are 0.9.16, a camera renders, actors and sync mode are cleaned up.
 
-Loads Town03, spawns vehicle.tesla.model3 and a 1280x720 RGB camera, ticks 20 times in synchronous mode and saves
+Loads Town03_Opt, spawns vehicle.tesla.model3 and a 1280x720 RGB camera, ticks 20 times in synchronous mode and saves
 /workspace/logs/smoke04.png. Pass: mean pixel > 10 and standard deviation > 5.
 """
 
@@ -23,7 +23,7 @@ def main() -> int:
     if server != EXPECTED or wheel != EXPECTED:  # ECC-01
         print(f"FAIL: both versions must be {EXPECTED}", file=sys.stderr)
         return 1
-    world = client.load_world("Town03")  # ECC-02: settings are applied after load_world
+    world = client.load_world("Town03_Opt")  # ECC-02: settings are applied after load_world
     actors, last = [], None
     try:
         settings = world.get_settings()

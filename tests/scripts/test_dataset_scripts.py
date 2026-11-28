@@ -51,7 +51,7 @@ def test_label_boxes_need_points_and_range(fake_carla):
 
 def test_detection_script_layout(fake_carla, tmp_path):
     _load("gen_detection_dataset").main(
-        ["--towns", "Town03", "--frames-per-town", "2", "--split", "train", "--out", str(tmp_path),
+        ["--towns", "Town03_Opt", "--frames-per-town", "2", "--split", "train", "--out", str(tmp_path),
          "--stride", "10", "--warmup", "0", "--vehicles", "3", "--walkers", "2", "--render-check", "1"]
     )  # fmt: skip
     assert len(list((tmp_path / "points").glob("*.npy"))) == 2
@@ -64,7 +64,7 @@ def test_detection_script_layout(fake_carla, tmp_path):
 def test_detection_script_appends_val_split(fake_carla, tmp_path):
     gen = _load("gen_detection_dataset")
     base = ["--stride", "10", "--warmup", "0", "--vehicles", "1", "--walkers", "0", "--out", str(tmp_path)]
-    gen.main(["--towns", "Town03", "--frames-per-town", "1", "--split", "train", *base])
+    gen.main(["--towns", "Town03_Opt", "--frames-per-town", "1", "--split", "train", *base])
     gen.main(["--towns", "Town02", "--frames-per-town", "1", "--split", "val", *base])
     assert (tmp_path / "ImageSets/val.txt").read_text().split() == ["000001"]
 
@@ -74,7 +74,7 @@ def test_seg_script_layout(fake_carla, tmp_path):
     q.mkdir()
     (q / "carla-2000.quality").write_text("Low\n")
     _load("gen_seg_dataset").main(
-        ["--towns", "Town03", "--frames-per-town", "2", "--split", "train", "--out", str(tmp_path / "seg"),
+        ["--towns", "Town03_Opt", "--frames-per-town", "2", "--split", "train", "--out", str(tmp_path / "seg"),
          "--quality", "Low", "--quality-dir", str(q), "--stride", "10", "--warmup", "0", "--vehicles", "2", "--walkers", "1"]
     )  # fmt: skip
     assert len(list((tmp_path / "seg/images").glob("*.png"))) == 2
@@ -88,7 +88,7 @@ def test_seg_script_refuses_quality_mismatch(fake_carla, tmp_path, content):
         (tmp_path / "carla-2000.quality").write_text(content)
     with pytest.raises(SystemExit) as e:
         _load("gen_seg_dataset").main(
-            ["--towns", "Town03", "--frames-per-town", "1", "--split", "train", "--out", str(tmp_path / "seg"),
+            ["--towns", "Town03_Opt", "--frames-per-town", "1", "--split", "train", "--out", str(tmp_path / "seg"),
              "--quality", "Low", "--quality-dir", str(tmp_path)]
         )  # fmt: skip
     assert e.value.code == 2
@@ -97,7 +97,7 @@ def test_seg_script_refuses_quality_mismatch(fake_carla, tmp_path, content):
 
 def test_traffic_is_destroyed_with_controllers_stopped(fake_carla, tmp_path):
     _load("gen_detection_dataset").main(
-        ["--towns", "Town03", "--frames-per-town", "1", "--split", "train", "--out", str(tmp_path),
+        ["--towns", "Town03_Opt", "--frames-per-town", "1", "--split", "train", "--out", str(tmp_path),
          "--warmup", "0", "--vehicles", "2", "--walkers", "2"]
     )  # fmt: skip
     assert not fake_carla.last_world.actors

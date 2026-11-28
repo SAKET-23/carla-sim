@@ -33,7 +33,7 @@ class Driver:
 def straight_sim(make_sim, points, speed=0.0, length=190.0, **cfg):
     """(sim, first observation) on the fixture's straight."""
     sim = make_sim(**cfg)
-    rc = straight_route(points, "Town03", length)
+    rc = straight_route(points, "Town03_Opt", length)
     return sim, sim.reset(plain_scenario(rc, speed))
 
 
@@ -87,5 +87,5 @@ def signalised_route(world, points):
             back = stop.previous(90.0)
             if back and back[0].transform.location.distance(carla.Location(*start[:3])) < 5.0:
                 goal = stop.next(30.0)[0].transform.location
-                return {"town": "Town03", "start": start, "goal": [goal.x, goal.y, goal.z]}, light, stop
+                return {"town": "Town03_Opt", "start": start, "goal": [goal.x, goal.y, goal.z]}, light, stop
     raise RuntimeError("no traffic light matches the signalised_junction fixture")

@@ -8,7 +8,7 @@ def straight_nominal(length: float = 100.0, **kw) -> Scenario:
         "name": "straight",
         "seed": 0,
         "route": None,
-        "carla_route": {"town": "Town03", "start": [0.0, 0.0, 0.0, 0.0], "goal": [length, 0.0, 0.0]},
+        "carla_route": {"town": "Town03_Opt", "start": [0.0, 0.0, 0.0, 0.0], "goal": [length, 0.0, 0.0]},
         "friction_zones": (),
         "base_mu": 1.0,
         "actors": (),

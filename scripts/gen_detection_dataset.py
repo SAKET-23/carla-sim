@@ -1,6 +1,6 @@
 """Generate the LiDAR detection dataset (Plan/03-models/detection-3d.md §2) in the OpenPCDet custom layout.
 
-gen_detection_dataset.py --towns Town01,Town03,Town04,Town05 --frames-per-town 1600 --split train --out DIR
+gen_detection_dataset.py --towns Town01,Town03_Opt,Town04,Town05 --frames-per-town 1600 --split train --out DIR
 (then `--towns Town02 --split val`, `--towns Town10HD --split test`). Needs a CARLA server; always restores
 asynchronous mode. Boxes and scan come from the same snapshot frame (ECC-30).
 """

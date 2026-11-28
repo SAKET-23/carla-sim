@@ -193,7 +193,7 @@ def test_close_restores_async(fake_carla):
 
 def test_failed_reset_restores_async(fake_carla):
     sim = _sim()
-    sc = straight_nominal(carla_route={"town": "Town03", "start": [0, 0, 0, 0], "goal": [10, 0, 0]})
+    sc = straight_nominal(carla_route={"town": "Town03_Opt", "start": [0, 0, 0, 0], "goal": [10, 0, 0]})
     fake_carla.planner_trace = fake_carla.straight_trace(n=10, lane_change_at=3)
     with pytest.raises(ValueError, match="lane change"):
         sim.reset(sc)

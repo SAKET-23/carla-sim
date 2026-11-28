@@ -16,7 +16,7 @@ source /opt/ros/humble/setup.bash
 set -u
 
 launch_log=/workspace/logs/smoke-05-launch.log
-ros2 launch hybrid_av_bringup bridge_only.launch.py town:=Town03 > "$launch_log" 2>&1 &
+ros2 launch hybrid_av_bringup bridge_only.launch.py town:=Town03_Opt > "$launch_log" 2>&1 &
 LAUNCH_PID=$!
 trap 'kill -INT "$LAUNCH_PID" 2> /dev/null || true; wait "$LAUNCH_PID" 2> /dev/null || true' EXIT
 

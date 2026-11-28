@@ -78,14 +78,14 @@ def test_invalid_substep_config():
 
 
 def test_town_not_reloaded_when_current(fake_carla):
-    fake_carla.set_current_map("Carla/Maps/Town03")
-    with carla_session(CarlaSimConfig(town="Town03")):
+    fake_carla.set_current_map("Carla/Maps/Town03_Opt")
+    with carla_session(CarlaSimConfig(town="Town03_Opt")):
         pass
     assert fake_carla.load_world_calls == 0
 
 
 def test_town_loaded_then_settings_applied_after(fake_carla):
     # load_world resets settings (ECC-02), so sync mode must be applied after it
-    with carla_session(CarlaSimConfig(town="Town03")) as s:
+    with carla_session(CarlaSimConfig(town="Town03_Opt")) as s:
         assert fake_carla.load_world_calls == 1
         assert s.world.get_settings().synchronous_mode

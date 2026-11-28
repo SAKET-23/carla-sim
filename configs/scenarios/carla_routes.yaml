@@ -1,6 +1,6 @@
 # CARLA start/goal pairs, filled in G2 (expected-code-changes.md ECC-13/ECC-14, scenarios.md section 1).
 # Key: "<family>_<seed>" or "<family>". Value, CARLA coordinates; routes must need no lane change:
-#   {town: Town03, start: [x, y, z, yaw_deg], goal: [x, y, z]}
+#   {town: Town03_Opt, start: [x, y, z, yaw_deg], goal: [x, y, z]}
 # Optional per-route speed-limit cache (m/s, one value or one per route waypoint, ECC-14), sampled in G2:
 #   cache: {speed_limit: 11.11}
 {}

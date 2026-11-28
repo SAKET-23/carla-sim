@@ -18,7 +18,7 @@ def carla_scenario(sc, family: str, seed: int, town: str | None, routes: Path, f
             raise LookupError(f"no CARLA route for {family} seed {seed}: add one to {routes}")
         # ECC-43: fallback route is resolved on the live map (spawn point 0 to a seed-chosen spawn point, 300-600 m)
         return dataclasses.replace(
-            sc, route=None, carla_route={"town": town or "Town03", "spawn_fallback": True}
+            sc, route=None, carla_route={"town": town or "Town03_Opt", "spawn_fallback": True}
         )
     route = {k: entry[k] for k in ("town", "start", "goal")} | (
         {"cache": entry["cache"]} if "cache" in entry else {}

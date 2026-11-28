@@ -8,6 +8,6 @@
 07_pins	15	1	{ python -c 'import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0)); x=torch.randn(1024,1024,device="cuda"); print((x@x).sum().item())' && python /workspace/carla-sim/infra/runpod/smoke/trt_check.py && python -c 'import carla, kiss_icp, onnxruntime; print(carla.__file__, kiss_icp.__version__, onnxruntime.get_device())' && source /opt/ros/humble/setup.bash && ros2 doctor --report | head -30; } > $G1_DIR/pins.txt 2>&1
 08_measure	120	0	bash $G1_HOME/measure.sh
 09_pytest_not_carla	60	0	cd /workspace/carla-sim && python -m pytest -q -m "not carla" --junitxml=$G1_DIR/pytest_not_carla.xml
-10_pytest_carla	45	0	cd /workspace/carla-sim && start_carla.sh --quality Low --town Town03 && { python -m pytest -q -m carla --junitxml=$G1_DIR/pytest_carla.xml; rc=$?; stop_carla.sh; exit $rc; }
+10_pytest_carla	45	0	cd /workspace/carla-sim && start_carla.sh --quality Low --town Town03_Opt && { python -m pytest -q -m carla --junitxml=$G1_DIR/pytest_carla.xml; rc=$?; stop_carla.sh; exit $rc; }
 11_smoke05_06	45	0	bash /usr/local/share/carla-sim/smoke/05_ros.sh && bash /usr/local/share/carla-sim/smoke/06_stack.sh
 12_summary	5	0	python $G1_HOME/summary.py
