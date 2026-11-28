@@ -96,7 +96,7 @@ def test_traffic_context_lights(make_sim, points):
     _, world = connect(CarlaSimConfig(town="Town03_Opt"))
     rc, _, stop = signalised_route(world, points)
     obs = sim.reset(plain_scenario(rc, 6.0))
-    drv = Driver(sim, 6.0)
+    drv = Driver(sim, 6.0, follow=True)
     names = {
         carla.TrafficLightState.Red: Light.RED,
         carla.TrafficLightState.Yellow: Light.YELLOW,

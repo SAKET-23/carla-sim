@@ -14,17 +14,28 @@ ROUTES = ROOT / "configs/scenarios/carla_routes.yaml"
 LM = LongitudinalMap()
 
 
-class Driver:
-    """Speed-hold PI on throttle/brake plus a fixed library steering angle, through control_to_actuator."""
+def follow_steer(route, ego, max_steer: float, k_lat: float = 0.15, k_head: float = 1.0) -> float:
+    """Library steering angle (left positive): steer right when left of the route, toward its heading."""
+    p = route.project(ego.x, ego.y)
+    err = math.atan2(math.sin(p.heading - ego.psi), math.cos(p.heading - ego.psi))
+    return max(-max_steer, min(max_steer, k_head * err - k_lat * p.lateral))
 
-    def __init__(self, sim, v_ref: float, delta: float = 0.0) -> None:
-        self.sim, self.v_ref, self.delta, self.i = sim, v_ref, delta, 0.0
+
+class Driver:
+    """Speed-hold PI on throttle/brake plus a fixed library steering angle (or, with follow=True, a P law
+    on the planned route's lateral offset and heading error), through control_to_actuator."""
+
+    def __init__(self, sim, v_ref: float, delta: float = 0.0, follow: bool = False) -> None:
+        self.sim, self.v_ref, self.delta, self.follow, self.i = sim, v_ref, delta, follow, 0.0
         self.params = VehicleParams(max_steer_wheel=sim.max_steer)
 
     def cmd(self, ego):
         err = self.v_ref - ego.vx
         self.i += err * self.sim.dt
-        return control_to_actuator(Control(self.delta, 1.0 * err + 0.3 * self.i), ego.vx, self.params, LM)
+        delta = (
+            follow_steer(self.sim.route(), ego, self.params.max_steer_wheel) if self.follow else self.delta
+        )
+        return control_to_actuator(Control(delta, 1.0 * err + 0.3 * self.i), ego.vx, self.params, LM)
 
     def step(self, obs):
         return self.sim.step(self.cmd(obs.ego))

@@ -63,10 +63,14 @@ def test_red_light(make_sim, points, colour):
     for lo in sim._lights:  # every light on the route is held in the chosen colour
         lo.light.set_state(carla.TrafficLightState.Red if colour == "red" else carla.TrafficLightState.Green)
         lo.light.freeze(True)
-    drv, violations = Driver(sim, 6.0), 0
+    drv, violations, max_s, hit = Driver(sim, 6.0, follow=True), 0, 0.0, None
     for k in range(500):
         obs, info = drv.step(obs)
         violations += info.red_light_violation
+        max_s = max(max_s, info.route_s)
+        if info.collision != "none" and hit is None:
+            hit = info.collision
+            print(f"collision {hit!r} at k={k} s={info.route_s:.1f}")
         if k % 20 == 0 or info.red_light_violation:  # diagnostics: light seen, gap to the line, progress
             c = obs.context
             print(f"k={k} s={info.route_s:.1f} vx={obs.ego.vx:.1f} light={c.light_state.name} "
@@ -74,6 +78,9 @@ def test_red_light(make_sim, points, colour):
                   f"state={[lo.light.get_state().name for lo in sim._lights]}")  # fmt: skip
         if info.route_completed:
             break
+    assert max_s > max(lo.stop_s for lo in sim._lights), (
+        f"never crossed the stop line (max s {max_s:.1f}, hit {hit})"
+    )
     assert violations == (1 if colour == "red" else 0)
 
 
