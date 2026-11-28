@@ -237,6 +237,18 @@ def hold_speed(sim, obs, v0, seconds=1.5, kp=0.3, ki=0.15):
     return obs
 
 
+BRAKE_LEVELS = (
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.4,
+    0.5,
+    0.7,
+    1.0,
+)  # resolves the dead zone edge and steep part
 LAG_SKIP = 0.5  # s of drivetrain lag dropped at the start of every open-loop phase
 
 
@@ -265,7 +277,7 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
     parts += [
         run_long(sim, rc, v0, 12.0, lambda e, b=b: (0.0, b), lambda e: e.vx < 0.2)
         for v0 in (10.0, 20.0)
-        for b in levels
+        for b in BRAKE_LEVELS
     ]
     coast = run_long(sim, rc, 20.0, 15.0, lambda e: (0.0, 0.0), lambda e: e.vx < 5.0)
     parts.append(coast)  # the throttle-0 row of the table

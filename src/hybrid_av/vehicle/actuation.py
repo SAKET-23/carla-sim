@@ -24,6 +24,10 @@ class LongitudinalMap:
     table_speeds: tuple[float, ...] = ()
     table_throttles: tuple[float, ...] = ()
     table_accels: tuple[tuple[float, ...], ...] = ()
+    # Optional brake table (table maps only): brake_decels[i] is the extra decel beyond coasting at brake_levels[i]
+    # (levels start at 0.0; decels >= 0, non-decreasing). Empty -> the linear brake_gain law.
+    brake_levels: tuple[float, ...] = ()
+    brake_decels: tuple[float, ...] = ()
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "LongitudinalMap":
@@ -51,6 +55,17 @@ def drive_throttle(lm: LongitudinalMap, vx: float, required: float) -> float:
     return float(np.clip(lm.throttle_bias + lm.throttle_gain * required, 0.0, 1.0))
 
 
+def brake_for(lm: LongitudinalMap, d: float) -> float:
+    """Smallest brake in [0, 1] giving `d` > 0 m/s² of decel beyond coasting. The flat dead zone is skipped (a small d
+    gives its upper edge) and a d past the table gives its first saturating level."""
+    if not lm.brake_levels:
+        return float(np.clip(lm.brake_gain * d, 0.0, 1.0))
+    lv, dec = np.array(lm.brake_levels), np.array(lm.brake_decels)
+    keep = np.flatnonzero(np.diff(dec, prepend=-1.0) > 0)  # first level of each strict rise
+    keep[0] = np.flatnonzero(dec == dec[0])[-1]  # the dead zone starts at its upper edge
+    return float(np.clip(np.interp(d, dec[keep], lv[keep]), 0.0, 1.0))
+
+
 def control_to_actuator(u: Control, vx: float, p: VehicleParams, lm: LongitudinalMap) -> ActuatorCommand:
     f = np.interp(abs(vx), p.steer_curve_v, p.steer_curve_k)  # CARLA reduces the wheel angle with speed
     steer = float(np.clip(-u.delta / (p.max_steer_wheel * f), -1.0, 1.0))  # CARLA: positive = right
@@ -64,7 +79,7 @@ def control_to_actuator(u: Control, vx: float, p: VehicleParams, lm: Longitudina
         elif u.ax >= a0 - lm.coast_band:
             pass  # coast
         else:
-            brake = float(np.clip(lm.brake_gain * (a0 - u.ax), 0.0, 1.0))
+            brake = brake_for(lm, a0 - u.ax)
     elif abs(u.ax) >= lm.coast_band:
         required = u.ax + p.rolling + p.drag_coeff * vx**2
         if required > 0:

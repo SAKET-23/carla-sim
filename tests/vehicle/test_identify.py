@@ -223,3 +223,37 @@ def test_table_problems_flag_bad_tables():
     assert longitudinal_problems(p, good, 0.95) == []
     for bad in ((-2.0, 3.0, 0.0), (1.0, 2.0, 3.0), (-2.0, np.nan, 3.0)):
         assert len(longitudinal_problems(p, replace(good, table_accels=(bad,)), 0.95)) >= 1
+
+
+def test_brake_table_fit_recovers_dead_zone_plant():
+    from hybrid_av.vehicle.actuation import coast_accel
+
+    levels = (0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1.0)
+    s, p = _plant_samples()
+    keep = s.brake == 0.0  # drop the plant's linear brake runs
+    dt, rows = 0.05, []
+    for v0 in (10.0, 20.0):
+        for b in levels:
+            v = v0
+            for k in range(60):
+                ax = -0.38 * v - min(max(22 * (b - 0.15), 0.0), 9.0)
+                if k >= 10:
+                    rows.append((v, ax, 0.0, b))
+                v = max(v + ax * dt, 0.0)
+    lm = fit_longitudinal(
+        LongSamples(
+            *np.concatenate([np.array(rows).T, np.array([s.vx, s.ax, s.throttle, s.brake])[:, keep]], axis=1)
+        ),
+        p,
+    )
+    assert lm.brake_levels[0] == 0.0 and lm.brake_decels[0] == 0.0
+    d = dict(zip(lm.brake_levels, lm.brake_decels))
+    assert (
+        d[0.1] == pytest.approx(0.0, abs=0.7)
+        and d[0.3] == pytest.approx(3.3, abs=0.8)
+        and d[1.0] == pytest.approx(9.0, abs=0.8)
+    )
+    assert (np.diff(lm.brake_decels) >= 0).all()
+    assert longitudinal_problems(replace(p, max_decel=6.0), lm, 0.95) == []
+    assert longitudinal_problems(replace(p, max_decel=6.0), replace(lm, brake_gain=0.0), 0.95) == []
+    assert coast_accel(lm, 10.0) < 0

@@ -159,9 +159,17 @@ def longitudinal_problems(p: VehicleParams, lm: LongitudinalMap, r2: float) -> l
             (bool((np.diff(acc, axis=1) >= 0).all()), "drive table not monotone in throttle"),
             (bool((acc[:, 0] <= 0).all()), "throttle-0 (coast) row is positive"),
             (p.max_decel > 0.0, f"max_decel {p.max_decel:.4g} <= 0"),
-            (lm.brake_gain > 0.0, f"brake_gain {lm.brake_gain:.4g} <= 0"),
             (r2 >= 0.9, f"throttle fit R2 {r2:.3f} < 0.9"),
         ]
+        if lm.brake_levels:
+            bd = np.array(lm.brake_decels)
+            checks += [
+                (bool(np.isfinite(bd).all()), "brake table has non-finite entries"),
+                (bool((np.diff(bd) >= 0).all()), "brake table not monotone"),
+                (bool(bd[-1] > 0.0), "brake table's last decel <= 0"),
+            ]
+        else:
+            checks.append((lm.brake_gain > 0.0, f"brake_gain {lm.brake_gain:.4g} <= 0"))
         return [msg for ok, msg in checks if not ok]
     checks = [
         (0.0 <= p.rolling <= 1.0, f"rolling {p.rolling:.4g} outside [0, 1] m/s^2"),
@@ -261,7 +269,13 @@ def fit_longitudinal(s: LongSamples, p: VehicleParams) -> LongitudinalMap:
     lm = LongitudinalMap(table_speeds=speeds, table_throttles=throttles, table_accels=accels)
     braking = (s.brake > 0.0) & (s.vx > 2.0)
     d = np.array([coast_accel(lm, v) for v in s.vx[braking]]) - s.ax[braking]
-    return replace(lm, brake_gain=float(np.sum(s.brake[braking] * d) / np.sum(d * d)))
+    gain = float(np.sum(s.brake[braking] * d) / np.sum(d * d))
+    levels = sorted({round(float(b), 3) for b in s.brake[braking]})
+    decels = [float(np.mean(d[np.round(s.brake[braking], 3) == b])) for b in levels]
+    dec = np.maximum.accumulate(np.maximum([0.0, *decels], 0.0))
+    return replace(
+        lm, brake_gain=gain, brake_levels=(0.0, *levels), brake_decels=tuple(float(x) for x in dec)
+    )
 
 
 def throttle_r2(s: LongSamples, p: VehicleParams, lm: LongitudinalMap) -> float:

@@ -104,3 +104,30 @@ def test_table_low_speed_launch_and_mild_decel_still_throttle():
     lm = _low_lm()
     assert control_to_actuator(Control(0.0, 0.5), 0.1, P, lm).throttle > 0.0
     assert 0.0 < control_to_actuator(Control(0.0, -3.0), 10.0, P, lm).throttle < 0.2
+
+
+def _dead_zone_lm():
+    from dataclasses import replace
+
+    lv = (0.0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0)
+    dec = tuple(min(max(22 * (b - 0.15), 0.0), 9.0) for b in lv)
+    return replace(_table_lm(), brake_levels=lv, brake_decels=dec)
+
+
+def test_brake_table_inverts_dead_zone_and_round_trips(tmp_path):
+    import dataclasses
+
+    import yaml
+
+    from hybrid_av.config import load_dataclass
+    from hybrid_av.vehicle.actuation import coast_accel
+
+    lm = _dead_zone_lm()
+    a0 = coast_accel(lm, 10.0)
+    brake = lambda d: control_to_actuator(Control(0.0, a0 - d), 10.0, P, lm).brake
+    assert np.isclose(brake(1.5), 0.15 + 1.5 / 22, atol=0.01)
+    assert np.isclose(brake(0.25), 0.15, atol=0.02)  # dead-zone edge
+    assert brake(50.0) == 1.0  # beyond the table: its last level
+    f = tmp_path / "lm.yaml"
+    f.write_text(yaml.safe_dump(dataclasses.asdict(lm)))
+    assert load_dataclass(LongitudinalMap, f) == lm
