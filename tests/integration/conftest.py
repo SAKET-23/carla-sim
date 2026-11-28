@@ -1,6 +1,7 @@
 """Fixtures for the live CARLA suite (Plan/06-integration/integration-check.md). No module here imports `carla` at
 import time: the Mac has no wheel."""
 
+import os
 import socket
 from pathlib import Path
 
@@ -14,7 +15,8 @@ from hybrid_av.policy.network import CompactPolicy
 FIXTURE = Path(__file__).parent / "fixtures/town03_points.yaml"
 
 
-def _server_up(host="localhost", port=2000, timeout=2.0) -> bool:
+def _server_up(host="localhost", port=None, timeout=2.0) -> bool:
+    port = port or int(os.environ.get("CARLA_PORT", "2000"))
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True

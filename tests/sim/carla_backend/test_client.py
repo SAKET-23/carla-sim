@@ -89,3 +89,12 @@ def test_town_loaded_then_settings_applied_after(fake_carla):
     with carla_session(CarlaSimConfig(town="Town03_Opt")) as s:
         assert fake_carla.load_world_calls == 1
         assert s.world.get_settings().synchronous_mode
+
+
+def test_ports_from_env(monkeypatch):
+    from hybrid_av.sim.carla_backend.client import CarlaSimConfig
+
+    assert (CarlaSimConfig().port, CarlaSimConfig().tm_port) == (2000, 8000)
+    monkeypatch.setenv("CARLA_PORT", "3000")
+    monkeypatch.setenv("CARLA_TM_PORT", "9000")
+    assert (CarlaSimConfig().port, CarlaSimConfig().tm_port) == (3000, 9000)

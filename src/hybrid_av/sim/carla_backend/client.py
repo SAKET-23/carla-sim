@@ -1,5 +1,6 @@
 """CARLA connection, synchronous mode and guaranteed cleanup (simulation-backends.md §2). `carla` is imported lazily."""
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -10,8 +11,9 @@ from typing import Literal
 @dataclass(frozen=True, slots=True)
 class CarlaSimConfig:
     host: str = "localhost"
-    port: int = 2000
-    tm_port: int = 8000
+    # env overrides let several CARLA servers share one pod (G2 session 2): CARLA_PORT / CARLA_TM_PORT
+    port: int = field(default_factory=lambda: int(os.environ.get("CARLA_PORT", "2000")))
+    tm_port: int = field(default_factory=lambda: int(os.environ.get("CARLA_TM_PORT", "8000")))
     town: str = "Town03_Opt"
     dt: float = 0.05  # fixed_delta_seconds
     substep_dt: float = 0.01  # max_substep_delta_time
