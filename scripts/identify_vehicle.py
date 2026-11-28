@@ -8,6 +8,7 @@ Longitudinal:  identify_vehicle.py --longitudinal --vehicle configs/vehicle/carl
 """
 
 import argparse
+import contextlib
 import dataclasses
 import json
 import math
@@ -43,7 +44,9 @@ from hybrid_av.vehicle.params import VehicleParams
 
 FIXTURE = Path(__file__).resolve().parents[1] / "tests/integration/fixtures/town03_points.yaml"
 KP, KI = 1.0, 0.3  # speed-hold PI, m/s^2 per m/s and per m (the throttle comes from the LongitudinalMap)
-STEP_SPEEDS, STEP_DELTAS = (8.0, 12.0, 16.0), (0.03, -0.03, 0.06, -0.06, 0.1, -0.1)
+STEP_SPEEDS, STEP_ALATS = (8.0, 12.0, 16.0), (1.0, 2.0, 3.0)  # m/s, m/s^2 (linear-tyre regime)
+STEP_T = 3.5  # s per step segment: step at 1 s, steady state well before the last 1 s the gain uses
+SWEEP_AMP_ALAT = 3.0  # m/s^2 cap of the chirp amplitude at 12 m/s
 HOLD_OUT = 16.0  # m/s step segments kept out of the fit
 MIN_HELD_OUT = 3  # valid held-out segments needed for a verdict
 SWEEP_CHUNKS, SWEEP_T, SWEEP_F = (
@@ -73,10 +76,35 @@ def drive(sim, rc, v0, seconds, delta_of_t, v_ref, params, lm) -> Segment:
     return Segment(a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], collided)
 
 
-def chirp(f0, f1, T):
-    """delta(t) = 0.05 sin(phase) with the frequency rising linearly from f0 to f1 over T s, after 1 s of zero."""
+def step_deltas(L: float, v: float) -> list[float]:
+    """Step angles (rad, both signs) giving the target lateral accelerations: delta = a_lat L / v^2."""
+    return [sg * a * L / v**2 for a in STEP_ALATS for sg in (1.0, -1.0)]
+
+
+@contextlib.contextmanager
+def obstacles_unloaded(sim):
+    """Unload the roadside layers so excursions off the lane do not collide; reload them on exit."""
+    import carla
+
+    layers = (
+        carla.MapLayer.Buildings
+        | carla.MapLayer.Props
+        | carla.MapLayer.StreetLights
+        | carla.MapLayer.Walls
+        | carla.MapLayer.Foliage
+        | carla.MapLayer.ParkedVehicles
+    )  # fmt: skip  (not Ground: the car stays on terrain)
+    sim.world.unload_map_layer(layers)
+    try:
+        yield
+    finally:
+        sim.world.load_map_layer(layers)
+
+
+def chirp(f0, f1, T, amp=0.05):
+    """delta(t) = amp sin(phase) with the frequency rising linearly from f0 to f1 over T s, after 1 s of zero."""
     return lambda t: (
-        0.0 if t < 1.0 else 0.05 * math.sin(2 * math.pi * (f0 * (t - 1) + (f1 - f0) * (t - 1) ** 2 / (2 * T)))
+        0.0 if t < 1.0 else amp * math.sin(2 * math.pi * (f0 * (t - 1) + (f1 - f0) * (t - 1) ** 2 / (2 * T)))
     )
 
 
@@ -131,16 +159,18 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
         print(
             f"steering rate {rate:.2f} < 3.0 rad/s: set MPCConfig.ddelta_max = {rate * sim.dt:.4f} and the LiteSim limit"
         )
-    steps = {
-        (v, d): drive(sim, rc, v, 5.0, lambda t, d=d: 0.0 if t < 1.0 else d, v, params, lm)
-        for v in STEP_SPEEDS for d in STEP_DELTAS
-    }  # fmt: skip
-    f = np.linspace(SWEEP_F[0], SWEEP_F[1], SWEEP_CHUNKS + 1)
-    sweeps = [
-        drive(sim, rc, 12.0, SWEEP_T + 1.0, chirp(f[i], f[i + 1], SWEEP_T), 12.0, params, lm)
-        for i in range(SWEEP_CHUNKS)
-    ]
-    labelled = [(s, v, f"step v={v:g} delta={d:+g}") for (v, d), s in steps.items()] + [
+    with obstacles_unloaded(sim):
+        steps = {
+            (v, d): drive(sim, rc, v, STEP_T, lambda t, d=d: 0.0 if t < 1.0 else d, v, params, lm)
+            for v in STEP_SPEEDS for d in step_deltas(params.L, v)
+        }  # fmt: skip
+        amp = SWEEP_AMP_ALAT * params.L / 12.0**2
+        f = np.linspace(SWEEP_F[0], SWEEP_F[1], SWEEP_CHUNKS + 1)
+        sweeps = [
+            drive(sim, rc, 12.0, SWEEP_T + 1.0, chirp(f[i], f[i + 1], SWEEP_T, amp), 12.0, params, lm)
+            for i in range(SWEEP_CHUNKS)
+        ]
+    labelled = [(s, v, f"step v={v:g} delta={d:+.4f}") for (v, d), s in steps.items()] + [
         (s, 12.0, f"sweep {i}") for i, s in enumerate(sweeps)
     ]
     train, held, dropped = [], [], []

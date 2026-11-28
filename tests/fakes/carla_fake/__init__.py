@@ -8,7 +8,7 @@ import copy
 import fnmatch
 import itertools
 import math
-from enum import Enum
+from enum import Enum, IntFlag
 
 from . import command  # noqa: F401  (carla.command)
 
@@ -133,9 +133,18 @@ class LaneType(Enum):
     Any = -2
 
 
-class MapLayer(Enum):
+class MapLayer(IntFlag):
+    NONE = 0
+    Buildings = 1
+    Decals = 2
+    Foliage = 4
+    Ground = 8
     ParkedVehicles = 16
-    All = 255
+    Particles = 32
+    Props = 64
+    StreetLights = 128
+    Walls = 256
+    All = 65535
 
 
 class TrafficLightState(Enum):
@@ -513,6 +522,9 @@ class FakeWorld:
 
     def unload_map_layer(self, layer):
         self.__dict__.setdefault("unloaded_layers", []).append(layer)
+
+    def load_map_layer(self, layer):
+        self.__dict__.setdefault("loaded_layers", []).append(layer)
 
     def get_actor(self, actor_id):
         return self.actors.get(actor_id)
