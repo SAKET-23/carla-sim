@@ -26,7 +26,7 @@ _LIGHT = {"Red": Light.RED, "Yellow": Light.YELLOW, "Green": Light.GREEN}
 def test_features_match_independent_truth(make_sim):
     """IC-36 — see Plan/06-integration/integration-check.md; likely fix: ECC-25."""
     try:
-        sc = carla_scenario(make_scenario("nominal", 100000), "nominal", 100000, None, ROUTES)
+        sc = carla_scenario(make_scenario("nominal", 0), "nominal", 0, None, ROUTES)
     except LookupError:
         pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
     sim = make_sim(sensors=None, town=sc.carla_route["town"])

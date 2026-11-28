@@ -21,3 +21,22 @@ def test_plain_and_straight_scenarios():
     assert rc["goal"] == pytest.approx([10.0, 120.0, 0.5])  # yaw 90 deg: CARLA +y
     sc = plain_scenario(rc, 8.0)
     assert sc.actors == () and sc.controls == () and sc.ego_start_speed == 8.0 and sc.carla_route is rc
+
+
+def test_route_sets_pick_seed_mod_size_and_overrides(tmp_path):
+    def r(i):
+        return {"town": "Town01", "start": [i, 0, 0, 0], "goal": [i + 400, 0, 0]}
+
+    f = tmp_path / "routes.yaml"
+    f.write_text(
+        yaml.safe_dump(
+            {"nominal": [r(i) for i in range(10)], "nominal_town10hd": [r(100 + i) for i in range(3)]}
+        )
+    )
+    pick = lambda **kw: carla_scenario(
+        make_scenario("nominal", 1), "nominal", kw.pop("seed", 13), None, f, **kw
+    )
+    assert pick().carla_route["start"][0] == 3
+    assert pick(route_index=7).carla_route["start"][0] == 7
+    assert pick(route_set="town10hd").carla_route["start"][0] == 101
+    assert pick(route_set="town10hd", route_index=2).carla_route["start"][0] == 102

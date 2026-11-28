@@ -23,13 +23,13 @@ pytestmark = pytest.mark.carla
 def test_repeatability(make_sim):
     """IC-41 — see Plan/06-integration/integration-check.md; likely fix: ECC-27."""
     try:
-        sc = carla_scenario(make_scenario("nominal", 100000), "nominal", 100000, None, ROUTES)
+        sc = carla_scenario(make_scenario("nominal", 0), "nominal", 0, None, ROUTES)
     except LookupError:
         pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
     sc = dataclasses.replace(sc, time_limit=60.0)  # the first 60 s
     runs = []
     for _ in range(2):
-        sim = make_sim(sensors=None, town=sc.carla_route["town"], seed=100000)
+        sim = make_sim(sensors=None, town=sc.carla_route["town"], seed=0)
         stack = AutonomyStack(VehicleParams(), LongitudinalMap(), MPCConfig(), ReferenceConfig())
         runs.append(run_episode(sim, sc, stack, ConstantAction()))
         sim.close()

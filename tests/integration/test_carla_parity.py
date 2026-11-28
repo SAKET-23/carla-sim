@@ -23,7 +23,7 @@ from hybrid_av.vehicle.params import VehicleParams
 from tests.integration.helpers import ROUTES
 
 pytestmark = pytest.mark.carla
-SEED, N = 100000, 100
+SEED, N = 0, 100
 
 
 def _record_ros(tmp_path):

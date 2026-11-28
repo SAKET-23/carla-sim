@@ -120,7 +120,7 @@ def test_blocked_timeout(make_sim, points):
 def test_episode_result(make_sim):
     """IC-28 — see Plan/06-integration/integration-check.md."""
     try:
-        sc = carla_scenario(make_scenario("nominal", 100000), "nominal", 100000, None, ROUTES)
+        sc = carla_scenario(make_scenario("nominal", 0), "nominal", 0, None, ROUTES)
     except LookupError:
         pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
     sim = make_sim(sensors=None)

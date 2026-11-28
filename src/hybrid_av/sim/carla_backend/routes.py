@@ -6,13 +6,28 @@ from pathlib import Path
 import yaml
 
 
-def carla_scenario(sc, family: str, seed: int, town: str | None, routes: Path, fallback: bool = False):
+def carla_scenario(
+    sc,
+    family: str,
+    seed: int,
+    town: str | None,
+    routes: Path,
+    fallback: bool = False,
+    route_set: str | None = None,
+    route_index: int | None = None,
+):
     """The LiteSim scenario with its route replaced by the CARLA start/goal from carla_routes.yaml (G2).
 
     fallback=True (scripts, bridge): a missing entry yields a marker route that CarlaSim resolves against the loaded
     town (scenario_setup.spawn_point_route), so G1 smoke runs before G2 fills the file."""
     table = yaml.safe_load(Path(routes).read_text()) or {}
-    entry = table.get(f"{family}_{seed}") or table.get(family)
+    entry = (
+        table.get(f"{family}_{route_set}")
+        if route_set
+        else table.get(f"{family}_{seed}") or table.get(family)
+    )
+    if isinstance(entry, list) and entry:
+        entry = entry[(seed if route_index is None else route_index) % len(entry)]
     if entry is None:
         if not fallback:
             raise LookupError(f"no CARLA route for {family} seed {seed}: add one to {routes}")

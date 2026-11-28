@@ -31,9 +31,9 @@ ROUTES = _ROOT / "configs/scenarios/carla_routes.yaml"
 RIG = _ROOT / "configs/sensors/carla_rig.yaml"
 
 
-def carla_scenario(sc, family, seed, town):
+def carla_scenario(sc, family, seed, town, route_set=None, route_index=None):
     try:
-        return _carla_scenario(sc, family, seed, town, ROUTES, fallback=True)
+        return _carla_scenario(sc, family, seed, town, ROUTES, True, route_set, route_index)
     except LookupError as e:
         raise SystemExit(str(e)) from None
 
@@ -89,6 +89,8 @@ def main() -> None:
     ap.add_argument("--backend", choices=["litesim", "carla"], default="litesim")
     ap.add_argument("--vehicle", type=Path, help="VehicleParams YAML (default: the built-in defaults)")
     ap.add_argument("--town", help="CARLA town (overrides the scenario's)")
+    ap.add_argument("--route-set", help="carla_routes.yaml set, e.g. town10hd (key <family>_<set>)")
+    ap.add_argument("--route-index", type=int, help="route in the set (default: seed %% set size)")
     ap.add_argument(
         "--quality", choices=["Low", "Epic"], default="Low", help="recorded only; set at server launch"
     )
@@ -112,7 +114,7 @@ def main() -> None:
     lm, mpc, ref = LongitudinalMap(), MPCConfig(), ReferenceConfig()
     sc = make_scenario(a.family, a.seed)
     if a.backend == "carla":
-        sc = carla_scenario(sc, a.family, a.seed, a.town)
+        sc = carla_scenario(sc, a.family, a.seed, a.town, a.route_set, a.route_index)
         sim = CarlaSim(
             CarlaSimConfig(
                 town=sc.carla_route["town"],
