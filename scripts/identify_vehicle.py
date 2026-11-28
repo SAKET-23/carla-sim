@@ -179,7 +179,7 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
     ]
     train, held, dropped = [], [], []
     for s, v, name in labelled:
-        why = invalid_reason(s, v)
+        why = invalid_reason(s, v, steady=name.startswith("step"))
         if why:
             dropped.append(f"{name}: {why}")
         elif name.startswith("step") and v == HOLD_OUT:

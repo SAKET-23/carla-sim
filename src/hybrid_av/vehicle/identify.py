@@ -174,15 +174,25 @@ def lateral_problems(val: dict, gains: list[float], K: float) -> list[str]:
 
 
 def invalid_reason(
-    seg: Segment, v_target: float, window: int = 20, min_speed_frac: float = 0.85
+    seg: Segment,
+    v_target: float,
+    window: int = 20,
+    min_speed_frac: float = 0.85,
+    steady: bool = True,
+    max_r_std: float = 0.02,
 ) -> str | None:
     """Why a segment must not enter the fit or the held-out set (None when valid): it hit something, or ended
-    (mean of the last `window` samples) below `min_speed_frac` x the target speed (stalled, slid or braked off)."""
+    (mean of the last `window` samples) below `min_speed_frac` x the target speed (stalled, slid or braked off).
+    With `steady` (steps, not chirps) it must also hold a steady yaw rate: final-window std <= `max_r_std` rad/s
+    (a larger one means a disturbance such as kerb contact, which is not registered as a collision)."""
     if seg.collided:
         return "collided"
     v = float(np.mean(seg.vx[-window:]))
     if v < min_speed_frac * v_target:
         return f"final speed {v:.1f} < {min_speed_frac} x {v_target:g} m/s"
+    r_std = float(np.std(seg.r[-window:]))
+    if steady and r_std > max_r_std:
+        return f"not steady: r std {r_std:.3f} > {max_r_std:g} rad/s"
     return None
 
 

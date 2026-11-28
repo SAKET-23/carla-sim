@@ -166,3 +166,11 @@ def test_invalid_reason_flags_collided_and_slow_segments():
     seg = _flat(16.0)
     seg.vx[-20:] = 9.7  # slid: only the final window counts
     assert "final speed" in invalid_reason(seg, 16.0)
+
+
+def test_invalid_reason_steady_state_applies_to_steps_only():
+    seg = _flat(16.0)
+    assert invalid_reason(seg, 16.0) is None  # steady step stays valid
+    seg.r[-20:] = 0.07 * (-1.0) ** np.arange(20)  # oscillating final window, std 0.07
+    assert "not steady: r std" in invalid_reason(seg, 16.0)
+    assert invalid_reason(seg, 16.0, steady=False) is None  # sweeps are not steady by design
