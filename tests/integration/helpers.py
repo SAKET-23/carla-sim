@@ -27,7 +27,7 @@ class Driver:
 
     def __init__(self, sim, v_ref: float, delta: float = 0.0, follow: bool = False) -> None:
         self.sim, self.v_ref, self.delta, self.follow, self.i = sim, v_ref, delta, follow, 0.0
-        self.params = VehicleParams(max_steer_wheel=sim.max_steer)
+        self.params = VehicleParams(**sim.steer_params)
 
     def cmd(self, ego):
         err = self.v_ref - ego.vx

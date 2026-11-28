@@ -52,6 +52,13 @@ def test_reset_reads_steer_scale_from_physics_control(fake_carla):
     assert sim.max_steer == pytest.approx(70.0 * 3.141592653589793 / 180)  # ECC-05: wheels[0].max_steer_angle
 
 
+def test_reset_reads_steering_curve(fake_carla):
+    sim = _sim()
+    sim.reset(straight_nominal())
+    assert sim.steer_params["steer_curve_v"] == pytest.approx((0.0, 20 / 3.6, 60 / 3.6, 120 / 3.6))
+    assert sim.steer_params["steer_curve_k"] == (1.0, 0.9, 0.8, 0.7)
+
+
 def test_step_applies_control_with_steer_scale(fake_carla):
     sim = _sim()
     sim.reset(straight_nominal())

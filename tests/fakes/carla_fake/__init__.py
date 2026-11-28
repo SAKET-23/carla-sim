@@ -26,6 +26,11 @@ class _Attrs:
         self.__dict__.update(kw)
 
 
+class Vector2D(_Attrs):
+    def __init__(self, x=0.0, y=0.0):
+        self.x, self.y = x, y
+
+
 class Vector3D(_Attrs):
     x = y = z = 0.0
 
@@ -110,6 +115,8 @@ class VehiclePhysicsControl(_Attrs):
     def __init__(self, mass=1800.0, center_of_mass=None, wheels=None):
         self.mass, self.center_of_mass = mass, center_of_mass or Vector3D(0.0, 0.0, -0.3)
         self.wheels = wheels or [WheelPhysicsControl() for _ in range(4)]
+        # model3 on CARLA 0.9.16: (km/h, factor)
+        self.steering_curve = [Vector2D(x, y) for x, y in ((0, 1.0), (20, 0.9), (60, 0.8), (120, 0.7))]
 
 
 class WeatherParameters(_Attrs):

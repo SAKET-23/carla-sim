@@ -129,6 +129,9 @@ class _Zero:
 _ZERO = _Zero()
 
 
-def steer_from_delta(delta, max_steer_rad) -> float:
-    # ECC-05: CARLA steer is right-positive, library delta is left-positive
-    return float(np.clip(-delta / max_steer_rad, -1.0, 1.0))
+def steer_curve_from_physics(phys) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    """CARLA steering_curve (km/h, factor) -> (speeds in m/s, factors); identity when absent."""
+    pts = getattr(phys, "steering_curve", None)
+    if not pts:
+        return (0.0,), (1.0,)
+    return tuple(p.x / 3.6 for p in pts), tuple(p.y for p in pts)

@@ -40,7 +40,7 @@ def test_route_from_planner(make_sim, pairs):
 
 def _drive_constant_action(sim, sc, steps):
     obs = sim.reset(sc)
-    stack = AutonomyStack(VehicleParams(max_steer_wheel=sim.max_steer), LongitudinalMap(), *_cfgs())
+    stack = AutonomyStack(VehicleParams(**sim.steer_params), LongitudinalMap(), *_cfgs())
     stack.reset(sim.route())
     for _ in range(steps):
         feats = stack.features(obs)

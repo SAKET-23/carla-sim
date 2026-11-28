@@ -31,7 +31,7 @@ def test_features_match_independent_truth(make_sim):
         pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
     sim = make_sim(sensors=None, town=sc.carla_route["town"])
     obs = sim.reset(sc)
-    p = VehicleParams(max_steer_wheel=sim.max_steer)
+    p = VehicleParams(**sim.steer_params)
     stack = AutonomyStack(p, LongitudinalMap(), MPCConfig(), ReferenceConfig())
     stack.reset(sim.route())
     errors = {k: [] for k in (0, 1, 2, 3, 4, 9, 10, 19, 21, 22, 23)}

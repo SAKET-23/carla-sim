@@ -91,7 +91,7 @@ def read_api(sim) -> VehicleParams:
     ext = ego.bounding_box.extent
     m = float(phys.mass)
     return dataclasses.replace(
-        VehicleParams(), m=m, a=a, b=b, Iz=m * a * b, max_steer_wheel=sim.max_steer,
+        VehicleParams(), m=m, a=a, b=b, Iz=m * a * b, **sim.steer_params,
         max_steer=min(0.70, sim.max_steer), length=2 * ext.x, width=2 * ext.y,
     )  # fmt: skip
 
@@ -125,7 +125,8 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
     lm = LongitudinalMap()
     rate = steering_rate(sim, rc)
     print(f"API: L={params.L:.3f} a={params.a:.3f} b={params.b:.3f} m={params.m:.0f} "
-          f"max_steer_wheel={params.max_steer_wheel:.3f} steering rate {rate:.2f} rad/s")  # fmt: skip
+          f"max_steer_wheel={params.max_steer_wheel:.3f} steering rate {rate:.2f} rad/s\n"
+          f"steering curve (m/s -> factor): {list(zip(params.steer_curve_v, params.steer_curve_k))}")  # fmt: skip
     if rate < 3.0:
         print(
             f"steering rate {rate:.2f} < 3.0 rad/s: set MPCConfig.ddelta_max = {rate * sim.dt:.4f} and the LiteSim limit"

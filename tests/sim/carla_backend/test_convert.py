@@ -94,7 +94,18 @@ def test_bbox_into_base_link():
 def test_mount_and_steer():
     (loc, yaw) = C.mount_to_carla(0.0, 1.0, 0.7, math.pi / 2)  # left radar
     assert loc == (0.0, -1.0, 0.7) and yaw == pytest.approx(-90.0)
-    assert C.steer_from_delta(0.1, 0.6) == pytest.approx(-1 / 6) and C.steer_from_delta(1.0, 0.6) == -1.0
+
+
+def test_steer_curve_from_physics_converts_kmh_to_ms():
+    class V:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
+
+    class Phys:
+        steering_curve = (V(0, 1.0), V(36, 0.9))
+
+    assert C.steer_curve_from_physics(Phys()) == ((0.0, 10.0), (1.0, 0.9))
+    assert C.steer_curve_from_physics(object()) == ((0.0,), (1.0,))
 
 
 def test_module_does_not_import_carla():

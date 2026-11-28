@@ -14,6 +14,10 @@ class VehicleParams:
     Cr: float = 20000.0  # N/rad, rear axle cornering stiffness
     max_steer: float = 0.70  # rad, MPC steering bound
     max_steer_wheel: float = 0.70  # rad, physical full-lock wheel angle (CARLA steer=±1)
+    steer_curve_v: tuple[float, ...] = (0.0,)  # m/s breakpoints of CARLA's speed-dependent steering reduction
+    steer_curve_k: tuple[float, ...] = (
+        1.0,
+    )  # factor at each breakpoint (wheel angle = steer * max * factor)
     length: float = 4.7  # m, bounding box
     width: float = 1.9  # m
     max_accel: float = 2.5  # m/s² at full throttle (low speed)

@@ -164,7 +164,12 @@ class CarlaSim:
         box = ego.bounding_box
         self._front = box.extent.x + box.location.x  # front bumper ahead of the actor origin
         # ECC-05: steer in [-1, 1] maps to the front wheels' max_steer_angle (degrees)
-        self.max_steer = math.radians(ego.get_physics_control().wheels[0].max_steer_angle)
+        phys = ego.get_physics_control()
+        self.max_steer = math.radians(phys.wheels[0].max_steer_angle)
+        v, k = convert.steer_curve_from_physics(
+            phys
+        )  # speed-dependent steering reduction, see control_to_actuator
+        self.steer_params = {"max_steer_wheel": self.max_steer, "steer_curve_v": v, "steer_curve_k": k}
         self._fric = FrictionController(ego, sc.friction_zones, cfg.tire_friction_scale)
         wet = bool(sc.friction_zones)  # visual only, nothing depends on it
         self.world.set_weather(

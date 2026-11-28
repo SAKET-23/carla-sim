@@ -23,7 +23,8 @@ class LongitudinalMap:
 
 
 def control_to_actuator(u: Control, vx: float, p: VehicleParams, lm: LongitudinalMap) -> ActuatorCommand:
-    steer = float(np.clip(-u.delta / p.max_steer_wheel, -1.0, 1.0))  # CARLA: positive = right
+    f = np.interp(abs(vx), p.steer_curve_v, p.steer_curve_k)  # CARLA reduces the wheel angle with speed
+    steer = float(np.clip(-u.delta / (p.max_steer_wheel * f), -1.0, 1.0))  # CARLA: positive = right
     throttle = brake = 0.0
     if abs(u.ax) >= lm.coast_band:
         required = u.ax + p.rolling + p.drag_coeff * vx**2
