@@ -3,4 +3,73 @@
 #   {town: Town03_Opt, start: [x, y, z, yaw_deg], goal: [x, y, z]}
 # Optional per-route speed-limit cache (m/s, one value or one per route waypoint, ECC-14), sampled in G2:
 #   cache: {speed_limit: 11.11}
-{}
+nominal:
+- town: Town01
+  start: [248.4, 129.75, 0.3, 180.0]
+  goal: [88.62, 101.83, 0.3]
+- town: Town01
+  start: [232.2, 326.97, 0.3, 180.0]
+  goal: [378.18, 2.02, 0.3]
+- town: Town01
+  start: [116.97, 2.02, 0.3, -0.0]
+  goal: [223.67, 195.27, 0.3]
+- town: Town02
+  start: [84.41, 105.55, 0.5, -180.0]
+  goal: [193.78, 293.54, 0.5]
+- town: Town02
+  start: [162.76, 241.28, 0.5, -0.0]
+  goal: [-7.53, 251.36, 0.5]
+- town: Town02
+  start: [111.08, 306.42, 0.5, -0.0]
+  goal: [151.3, 241.28, 0.5]
+- town: Town03_Opt
+  start: [230.82, 35.71, 0.28, 91.39]
+  goal: [-145.52, 21.29, 0.28]
+- town: Town03_Opt
+  start: [107.9, 62.56, 0.28, -0.15]
+  goal: [-74.39, 77.35, 1.1]
+- town: Town05
+  start: [16.21, 84.59, 0.3, -179.93]
+  goal: [17.85, -4.49, 0.3]
+- town: Town05
+  start: [35.06, 163.66, 0.3, -89.98]
+  goal: [35.08, 76.12, 0.3]
+nominal_town10hd:
+- town: Town10HD
+  start: [-87.28, 24.44, 0.6, 0.16]
+  goal: [-5.78, -64.55, 0.6]
+- town: Town10HD
+  start: [32.05, 13.27, 0.6, -179.84]
+  goal: [32.34, 130.46, 0.6]
+- town: Town10HD
+  start: [-17.11, 13.26, 0.6, -179.84]
+  goal: [45.38, 13.41, 0.6]
+- town: Town10HD
+  start: [-9.88, -57.55, 0.6, 0.6]
+  goal: [-41.83, -16.56, 0.6]
+- town: Town10HD
+  start: [-41.83, -16.56, 0.6, -90.16]
+  goal: [61.6, 66.36, 0.6]
+- town: Town10HD
+  start: [-54.34, 137.05, 0.6, 0.35]
+  goal: [-64.58, -65.17, 0.6]
+- town: Town10HD
+  start: [-45.15, 55.72, 0.6, -90.16]
+  goal: [106.02, 50.87, 0.6]
+- town: Town10HD
+  start: [-67.25, 27.96, 0.6, 0.16]
+  goal: [-44.98, 114.96, 0.6]
+- town: Town10HD
+  start: [45.77, 137.46, 0.6, 0.32]
+  goal: [-48.58, 60.63, 0.6]
+- town: Town10HD
+  start: [-52.13, -40.18, 0.6, 90.43]
+  goal: [99.38, -6.31, 0.6]
+wet_curve:
+  town: Town03_Opt
+  start: [-11.97, -204.81, 0.0, -178.6]
+  goal: [-84.97, -151.12, 0.0]
+merge_deadlock:
+  town: Town03_Opt
+  start: [-85.1, 156.96, 0.0, 89.8]
+  goal: [-3.15, 204.04, 0.0]
