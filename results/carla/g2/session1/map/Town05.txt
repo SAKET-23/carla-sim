@@ -1,0 +1,2 @@
+curves with R in [28, 35] m (Town05):
+unsignalised T-junctions:

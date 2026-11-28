@@ -1,0 +1,4 @@
+curves with R in [28, 35] m (Town04):
+unsignalised T-junctions:
+  {'junction': 459, 'start': [351.72, -159.33, 0.0, -89.2], 'goal': [315.33, -263.52, 0.0]}
+  {'junction': 870, 'start': [351.47, -140.38, 0.0, -89.2], 'goal': [319.53, -212.49, 0.0]}

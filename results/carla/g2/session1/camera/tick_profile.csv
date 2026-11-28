@@ -1,0 +1,5 @@
+profile,tick_hz,carla_cpu_cores,bridge_cpu_cores,pod_cpu_cores,throttled_pct,gpu_mem_peak_mib,gpu_util_mean_pct
+cameras,2.108,1.48,0.87,2.47,10.8,4942,11
+cam_rgb,3.107,1.34,0.90,2.38,10.5,5381,9
+cam_540,3.249,1.72,0.80,2.66,14.8,5364,16
+cam_360,4.826,2.05,0.69,2.97,16.0,5298,20

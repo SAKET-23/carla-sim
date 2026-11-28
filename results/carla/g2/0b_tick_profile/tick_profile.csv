@@ -1,0 +1,7 @@
+profile,tick_hz,carla_cpu_cores,bridge_cpu_cores,pod_cpu_cores,throttled_pct,gpu_mem_peak_mib
+none,error=carla or bridge process not found ,,,,,
+cameras,2.209,1.42,0.87,2.35,5.5,5417
+cameras_lidar,1.768,1.76,0.90,2.72,4.3,5331
+full,1.778,1.77,0.90,2.74,4.2,5475
+full_lidar_light,1.969,1.63,0.89,2.61,6.6,5225
+A_norender,201.693,1.45,1.01,2.90,55.0,5374

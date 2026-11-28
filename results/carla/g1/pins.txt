@@ -1,0 +1,65 @@
+2.14.1+cu130 True NVIDIA RTX 4000 Ada Generation
+49386.7109375
+[11/27/2026-05:08:06] [TRT] [W] Using default stream in enqueueV3() may lead to performance issues due to additional calls to cudaStreamSynchronize() by TensorRT to ensure correct synchronization. Please use non-default stream instead.
+build_engine: TensorRT 11.4.0.106 has no FP16 flag; building as typed in the ONNX
+max abs difference vs onnxruntime-gpu: 0.00e+00
+/opt/venv/lib/python3.10/site-packages/carla/__init__.py 1.3.0 GPU
+
+   NETWORK CONFIGURATION
+inet         : 127.0.0.1
+inet4        : ['127.0.0.1']
+inet6        : ['::1']
+netmask      : 255.0.0.0
+device       : lo
+flags        : 73<RUNNING,LOOPBACK,UP>
+mtu          : 65536
+inet         : 172.22.0.2
+inet4        : ['172.22.0.2']
+ether        : c6:56:da:49:d2:5a
+netmask      : 255.255.0.0
+device       : eth0
+flags        : 4163<RUNNING,BROADCAST,MULTICAST,UP>
+mtu          : 1450
+broadcast    : 172.22.255.255
+
+   PACKAGE VERSIONS
+hybrid_av_bringup                         : latest=, local=0.1.0
+hybrid_av_nodes                           : latest=, local=0.1.0
+hybrid_av_msgs                            : latest=, local=0.1.0
+kiss_icp                                  : latest=, local=1.3.0
+action_msgs                               : latest=1.2.3, local=1.2.3
+actionlib_msgs                            : latest=4.9.2, local=4.9.2
+ament_cmake                               : latest=1.3.15, local=1.3.15
+ament_cmake_auto                          : latest=1.3.15, local=1.3.15
+ament_cmake_copyright                     : latest=0.12.15, local=0.12.15
+ament_cmake_core                          : latest=1.3.15, local=1.3.15
+ament_cmake_cppcheck                      : latest=0.12.15, local=0.12.15
+Traceback (most recent call last):
+  File "/opt/ros/humble/bin/ros2", line 33, in <module>
+    sys.exit(load_entry_point('ros2cli==0.18.21', 'console_scripts', 'ros2')())
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2cli/cli.py", line 91, in main
+    rc = extension.main(parser=parser, args=args)
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2doctor/command/doctor.py", line 53, in main
+    format_print(report_obj)
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2doctor/api/format.py", line 30, in format_print
+    print('{:{padding}}: {}'.format(item_name, item_content, padding=padding_num))
+BrokenPipeError: [Errno 32] Broken pipe
+Error in sys.excepthook:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 153, in apport_excepthook
+    with os.fdopen(os.open(pr_filename,
+FileNotFoundError: [Errno 2] No such file or directory: '/var/crash/_opt_ros_humble_bin_ros2.0.crash'
+
+Original exception was:
+Traceback (most recent call last):
+  File "/opt/ros/humble/bin/ros2", line 33, in <module>
+    sys.exit(load_entry_point('ros2cli==0.18.21', 'console_scripts', 'ros2')())
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2cli/cli.py", line 91, in main
+    rc = extension.main(parser=parser, args=args)
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2doctor/command/doctor.py", line 53, in main
+    format_print(report_obj)
+  File "/opt/ros/humble/lib/python3.10/site-packages/ros2doctor/api/format.py", line 30, in format_print
+    print('{:{padding}}: {}'.format(item_name, item_content, padding=padding_num))
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe

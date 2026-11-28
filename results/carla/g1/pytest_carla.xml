@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="1" skipped="29" tests="35" time="67.450" timestamp="2026-11-27T06:10:16.419790+00:00" hostname="4f60b2fc88b4"><testcase classname="tests.integration.test_carla_client" name="test_versions" time="0.052" /><testcase classname="tests.integration.test_carla_client" name="test_sync_settings_applied" time="39.758"><failure message="RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000">carla_server = None
+
+    def test_sync_settings_applied(carla_server):
+        """IC-02 — see Plan/06-integration/integration-check.md; likely fix: ECC-02."""
+        import carla
+    
+&gt;       with carla_session(CarlaSimConfig()) as s:
+
+tests/integration/test_carla_client.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/contextlib.py:135: in __enter__
+    return next(self.gen)
+src/hybrid_av/sim/carla_backend/client.py:91: in carla_session
+    client, world = connect(cfg)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cfg = CarlaSimConfig(host='localhost', port=2000, tm_port=8000, town='Town03', dt=0.05, substep_dt=0.01, max_substeps=10, qu...ego_blueprint='vehicle.tesla.model3', sensors=None, seed=0, timeout=20.0, no_rendering=False, tire_friction_scale=None)
+
+    def connect(cfg: CarlaSimConfig):
+        import carla
+    
+        client = carla.Client(cfg.host, cfg.port)
+        client.set_timeout(cfg.timeout)
+        world = client.get_world()
+        # ECC-02: map names look like "Carla/Maps/Town03"; load_world resets settings, so apply_sync runs after it
+        if not world.get_map().name.endswith(cfg.town):
+&gt;           world = client.load_world(cfg.town)
+E           RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000
+
+src/hybrid_av/sim/carla_backend/client.py:44: RuntimeError</failure></testcase><testcase classname="tests.integration.test_carla_client" name="test_close_restores_async_and_destroys_actors" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_client.py:50: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_client" name="test_reset_time" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_client.py:66: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_pose_matches_transform" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:15: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_left_turn_signs" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:52: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_body_velocities" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:62: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_imu_lateral_accel_sign" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:74: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_imu_gyro_matches_angular_velocity" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:81: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_convert_live" name="test_imu_rate" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_convert_live.py:90: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_determinism" name="test_repeatability" time="0.042"><skipped type="pytest.skip" message="no CARLA route for nominal: fill carla_routes.yaml (G2)">/workspace/carla-sim/tests/integration/test_carla_determinism.py:28: no CARLA route for nominal: fill carla_routes.yaml (G2)</skipped></testcase><testcase classname="tests.integration.test_carla_features" name="test_features_match_independent_truth" time="0.018"><skipped type="pytest.skip" message="no CARLA route for nominal: fill carla_routes.yaml (G2)">/workspace/carla-sim/tests/integration/test_carla_features.py:31: no CARLA route for nominal: fill carla_routes.yaml (G2)</skipped></testcase><testcase classname="tests.integration.test_carla_friction" name="test_zone_applies_and_restores" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_friction.py:40: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_friction" name="test_other_vehicles_unchanged" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_friction.py:52: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_friction" name="test_low_friction_limits_lateral_accel" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_friction.py:59: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_collisions[vehicle.audi.tt-vehicle]" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:24: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_collisions[walker.pedestrian.0001-pedestrian]" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:24: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_collisions[static.prop.streetbarrier-static]" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:24: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_red_light[red]" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:47: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_red_light[green]" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:47: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_off_road" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:67: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_blocked_timeout" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_infractions.py:104: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_infractions" name="test_episode_result" time="0.017"><skipped type="pytest.skip" message="no CARLA route for nominal: fill carla_routes.yaml (G2)">/workspace/carla-sim/tests/integration/test_carla_infractions.py:125: no CARLA route for nominal: fill carla_routes.yaml (G2)</skipped></testcase><testcase classname="tests.integration.test_carla_parity" name="test_parity_in_process_vs_ros" time="0.082"><skipped type="pytest.skip" message="no CARLA route for nominal: fill carla_routes.yaml (G2)">/workspace/carla-sim/tests/integration/test_carla_parity.py:77: no CARLA route for nominal: fill carla_routes.yaml (G2)</skipped></testcase><testcase classname="tests.integration.test_carla_route" name="test_route_from_planner" time="20.019"><error message="failed on setup with &quot;RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000&quot;">carla_server = None
+
+    @pytest.fixture(scope="module")
+    def pairs(carla_server):
+&gt;       _, world = connect(CarlaSimConfig(town="Town03"))
+
+tests/integration/test_carla_route.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cfg = CarlaSimConfig(host='localhost', port=2000, tm_port=8000, town='Town03', dt=0.05, substep_dt=0.01, max_substeps=10, qu...ego_blueprint='vehicle.tesla.model3', sensors=None, seed=0, timeout=20.0, no_rendering=False, tire_friction_scale=None)
+
+    def connect(cfg: CarlaSimConfig):
+        import carla
+    
+        client = carla.Client(cfg.host, cfg.port)
+        client.set_timeout(cfg.timeout)
+&gt;       world = client.get_world()
+E       RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000
+
+src/hybrid_av/sim/carla_backend/client.py:41: RuntimeError</error></testcase><testcase classname="tests.integration.test_carla_route" name="test_speed_limits" time="0.000"><error message="failed on setup with &quot;RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000&quot;">carla_server = None
+
+    @pytest.fixture(scope="module")
+    def pairs(carla_server):
+&gt;       _, world = connect(CarlaSimConfig(town="Town03"))
+
+tests/integration/test_carla_route.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cfg = CarlaSimConfig(host='localhost', port=2000, tm_port=8000, town='Town03', dt=0.05, substep_dt=0.01, max_substeps=10, qu...ego_blueprint='vehicle.tesla.model3', sensors=None, seed=0, timeout=20.0, no_rendering=False, tire_friction_scale=None)
+
+    def connect(cfg: CarlaSimConfig):
+        import carla
+    
+        client = carla.Client(cfg.host, cfg.port)
+        client.set_timeout(cfg.timeout)
+&gt;       world = client.get_world()
+E       RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000
+
+src/hybrid_av/sim/carla_backend/client.py:41: RuntimeError</error></testcase><testcase classname="tests.integration.test_carla_route" name="test_lane_width_and_junctions" time="0.000"><error message="failed on setup with &quot;RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000&quot;">carla_server = None
+
+    @pytest.fixture(scope="module")
+    def pairs(carla_server):
+&gt;       _, world = connect(CarlaSimConfig(town="Town03"))
+
+tests/integration/test_carla_route.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cfg = CarlaSimConfig(host='localhost', port=2000, tm_port=8000, town='Town03', dt=0.05, substep_dt=0.01, max_substeps=10, qu...ego_blueprint='vehicle.tesla.model3', sensors=None, seed=0, timeout=20.0, no_rendering=False, tire_friction_scale=None)
+
+    def connect(cfg: CarlaSimConfig):
+        import carla
+    
+        client = carla.Client(cfg.host, cfg.port)
+        client.set_timeout(cfg.timeout)
+&gt;       world = client.get_world()
+E       RuntimeError: time-out of 20000ms while waiting for the simulator, make sure the simulator is ready and connected to localhost:2000
+
+src/hybrid_av/sim/carla_backend/client.py:41: RuntimeError</error></testcase><testcase classname="tests.integration.test_carla_route" name="test_traffic_context_lights" time="0.000"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_route.py:91: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_lidar_left_prop" time="0.000"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:33: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_lidar_full_sweep" time="0.000"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:50: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_radar_signs" time="0.000"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:66: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_frame_alignment" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:95: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_camera_projection" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:110: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.integration.test_carla_sensors" name="test_sensor_transforms" time="0.001"><skipped type="pytest.skip" message="run find_map_features.py --fixture first">/workspace/carla-sim/tests/integration/test_carla_sensors.py:172: run find_map_features.py --fixture first</skipped></testcase><testcase classname="tests.sim.carla_backend.test_api_surface" name="test_real_carla_has_api_surface" time="0.007" /></testsuite></testsuites>

@@ -1,0 +1,1 @@
+circle: p50 15.99 ms  p90 17.94 ms  p99 20.45 ms  max 25.51 ms  (63 Hz at p50)  -> runs/20261128T023645Z_bench_mpc/metrics.json

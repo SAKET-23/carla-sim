@@ -1,0 +1,16 @@
+camera_profile	0	571s
+map_fixture	127	0s
+map_Town01	0	63s	port 4000
+map_fixture	1	64s	port 2000
+map_Town02	0	52s	port 4000
+ic_suite	1	101s	port 2000
+map_Town04	0	57s	port 4000
+map_Town05	0	58s	port 4000
+ic37	0	110s	port 2000
+map_Town10HD	0	55s	port 4000
+vehicle_lateral	1	82s	port 3000
+vehicle_long	1	50s	port 3000
+friction	1	55s	port 3000
+bench_mpc	0	38s	port 2000
+ic40_A	0	80s	port 2000
+ic40_C	0	136s	port 2000

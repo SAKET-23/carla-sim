@@ -1,0 +1,21 @@
+town,quality,gpu_mem_peak_mib,ram_peak_mib,cpu_mean_pct,tick_hz_mean,ticks
+Town03_Opt,Low,CARLA stopped
+CARLA starting, log /workspace/logs/carla-20261127T051647Z.log
+CARLA server: 0.9.16 Carla/Maps/Town10HD_Opt
+loaded Town03_Opt
+CARLA ready on port 2000 (quality Low)
+5761,72220,0.0,1.791,600
+Town03_Opt,Epic,CARLA stopped
+CARLA starting, log /workspace/logs/carla-20261127T052754Z.log
+CARLA server: 0.9.16 Carla/Maps/Town10HD_Opt
+loaded Town03_Opt
+CARLA ready on port 2000 (quality Epic)
+6749,66780,0.0,1.529,600
+Town10HD,Low,error=start_carla failed ,,,,
+Town10HD,Epic,CARLA stopped
+CARLA starting, log /workspace/logs/carla-20261127T053923Z.log
+CARLA server: 0.9.16 Carla/Maps/Town10HD_Opt
+loaded Town10HD
+CARLA ready on port 2000 (quality Epic)
+7194,66099,0.0,1.571,600
+rl_mode_A,-,deferred to G2 IC-40,,,,
