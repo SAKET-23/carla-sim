@@ -7,7 +7,7 @@ from dataclasses import dataclass, replace
 import numpy as np
 from scipy.optimize import least_squares
 
-from hybrid_av.vehicle.actuation import LongitudinalMap
+from hybrid_av.vehicle.actuation import LongitudinalMap, drive_throttle
 from hybrid_av.vehicle.params import VehicleParams
 
 G = 9.81
@@ -141,11 +141,11 @@ def lowpass(x: np.ndarray, dt: float, fc: float) -> np.ndarray:
 
 
 def long_run_arrays(
-    rows: np.ndarray, dt: float, skip: float = 1.0
+    rows: np.ndarray, dt: float, skip: float = 0.0
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """(vx, ax, throttle, brake) from rows of (vx, ax, throttle, brake), dropping the first `skip` s then low-passing ax (empty arrays when the run is shorter than `skip`).
+    """(vx, ax, throttle, brake) from rows of (vx, ax, throttle, brake), dropping the first `skip` s then low-passing ax (empty arrays when nothing is left).
 
-    set_target_velocity at reset makes get_acceleration spike to about v0/dt, so the transient goes before the filter."""
+    The reset spike is handled by run_long's settle phase, so skip defaults to 0."""
     a = np.asarray(rows).reshape(-1, 4)[round(skip / dt) :]
     return a[:, 0], lowpass(a[:, 1], dt, 5.0), a[:, 2], a[:, 3]
 
@@ -205,8 +205,31 @@ def steady_gain_error(seg: Segment, p: VehicleParams, K: float, window: int = 20
     return abs(np.mean(seg.r[-window:]) / np.mean(seg.delta[-window:]) / (v / (p.L + K * v**2)) - 1.0)
 
 
+SPEED_EDGES = (0.0, 3.0, 6.0, 10.0, 15.0, 20.0, 25.0)  # the last bin is open-ended
+
+
+def fit_drive_table(s: LongSamples, p: VehicleParams, edges=SPEED_EDGES):
+    """(speeds, throttles, accels) grid: per speed bin and throttle level (0.1 steps) the mean required drive accel,
+    monotone in throttle, with throttle 0 -> accel 0 prepended. Missing levels are interpolated; empty bins dropped."""
+    need = s.ax + p.rolling + p.drag_coeff * s.vx**2
+    drive = (s.throttle > 0.0) & (s.brake == 0.0)
+    level = np.round(s.throttle * 10).astype(int)
+    levels = np.arange(0, 11)
+    speeds, rows = [], []
+    for lo, hi in itertools.pairwise(edges):
+        m = drive & (s.vx >= lo) & ((s.vx < hi) | (hi == edges[-1]))
+        have = [k for k in range(1, 11) if (m & (level == k)).any()]
+        if not have:
+            continue
+        mean = [float(np.mean(need[m & (level == k)])) for k in have]
+        acc = np.interp(levels, [0, *have], [0.0, *mean])
+        speeds.append(float(np.mean(s.vx[m])))
+        rows.append(tuple(float(a) for a in np.maximum.accumulate(acc)))
+    return tuple(speeds), tuple(float(k) / 10 for k in levels), tuple(rows)
+
+
 def fit_longitudinal(s: LongSamples, p: VehicleParams) -> LongitudinalMap:
-    """calibration.md §2 step 4: drive side linear over throttle 0.2-0.8 and 3-20 m/s, brake side through the origin."""
+    """calibration.md §2 step 4: drive side a 2-D (speed, throttle) table (the linear fit is kept for the gain gate), brake side through the origin."""
     need = s.ax + p.rolling + p.drag_coeff * s.vx**2  # drive accel required beyond the resistances
     drive = (s.vx >= 3.0) & (s.vx <= 20.0) & (s.throttle >= 0.2) & (s.throttle <= 0.8)
     gain, bias = np.polyfit(need[drive], s.throttle[drive], 1)
@@ -216,14 +239,20 @@ def fit_longitudinal(s: LongSamples, p: VehicleParams) -> LongitudinalMap:
     coast = (s.throttle == 0.0) & (s.brake == 0.0) & (s.vx > 5.0)
     default = LongitudinalMap()
     band = float(np.max(np.abs(s.ax[coast]))) if coast.any() else default.coast_band
-    return LongitudinalMap(float(gain), float(bias), brake_gain, band)
+    speeds, throttles, accels = fit_drive_table(s, p)
+    return LongitudinalMap(float(gain), float(bias), brake_gain, band, speeds, throttles, accels)
 
 
 def throttle_r2(s: LongSamples, p: VehicleParams, lm: LongitudinalMap) -> float:
-    """R^2 of the drive-side fit; below 0.9 the map should become a 2-D table (calibration.md §2, a code change)."""
+    """R^2 of the drive-side prediction of the actual throttle (the table when set, else the linear law)."""
     need = s.ax + p.rolling + p.drag_coeff * s.vx**2
-    drive = (s.vx >= 3.0) & (s.vx <= 20.0) & (s.throttle >= 0.2) & (s.throttle <= 0.8)
-    y, pred = s.throttle[drive], lm.throttle_bias + lm.throttle_gain * need[drive]
+    if lm.table_speeds:
+        drive = (s.throttle > 0.0) & (s.brake == 0.0)
+        pred = np.array([drive_throttle(lm, v, n) for v, n in zip(s.vx[drive], need[drive])])
+    else:
+        drive = (s.vx >= 3.0) & (s.vx <= 20.0) & (s.throttle >= 0.2) & (s.throttle <= 0.8)
+        pred = lm.throttle_bias + lm.throttle_gain * need[drive]
+    y = s.throttle[drive]
     return float(1.0 - np.sum((y - pred) ** 2) / np.sum((y - np.mean(y)) ** 2))
 
 

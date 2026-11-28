@@ -48,3 +48,35 @@ def test_steer_curve_loads_from_yaml(tmp_path):
     f.write_text("steer_curve_v: [0, 5]\nsteer_curve_k: [1, 0.9]\n")
     p = VehicleParams.from_yaml(f)
     assert p.steer_curve_v == (0.0, 5.0) and p.steer_curve_k == (1.0, 0.9)
+
+
+def _table_lm():
+    thr = tuple(k / 10 for k in range(11))
+    speeds = (2.0, 10.0, 20.0)
+    accels = tuple(tuple(6.0 * t**2 * (1 - 0.8 * v / 25.0) for t in thr) for v in speeds)
+    return LongitudinalMap(table_speeds=speeds, table_throttles=thr, table_accels=accels)
+
+
+def test_table_inverts_round_trip_and_linear_default_unchanged():
+    lm = _table_lm()
+    for vx in (2.0, 6.0, 10.0, 17.0):
+        for t in (0.6, 0.8, 0.9):
+            f = np.interp(
+                vx, (2.0, 10.0, 20.0), [6.0 * t**2 * (1 - 0.8 * v / 25.0) for v in (2.0, 10.0, 20.0)]
+            )
+            ax = f - P.rolling - P.drag_coeff * vx**2
+            got = control_to_actuator(Control(0.0, ax), vx, P, lm).throttle
+            assert np.isclose(got, t, atol=0.05)
+    assert control_to_actuator(Control(0.0, 99.0), 10.0, P, lm).throttle == 1.0
+    assert np.isclose(control_to_actuator(Control(0.0, 2.0), 10.0, P, LM).throttle, 0.10 + 0.35 * 2.19)
+
+
+def test_table_yaml_round_trip(tmp_path):
+    import yaml
+
+    from hybrid_av.config import load_dataclass
+
+    lm = _table_lm()
+    f = tmp_path / "lm.yaml"
+    f.write_text(yaml.safe_dump(__import__("dataclasses").asdict(lm)))
+    assert load_dataclass(LongitudinalMap, f) == lm

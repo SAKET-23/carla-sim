@@ -112,7 +112,7 @@ def test_long_run_arrays_discards_reset_spike_before_lowpass():
     ax = np.full(n, -(0.3 + 0.0005 * 17.0**2))
     ax[0] = 400.0  # get_acceleration right after set_target_velocity
     rows = np.column_stack([vx, ax, np.zeros(n), np.zeros(n)])
-    v, a, _thr, _brk = long_run_arrays(rows, dt)
+    v, a, _thr, _brk = long_run_arrays(rows, dt, skip=1.0)
     assert len(v) == n - 20 and np.ptp(a) < 1e-9 and a[0] == pytest.approx(ax[1])
     rolling, drag = fit_coastdown(vx[20:], a)
     assert rolling + drag * 17.0**2 == pytest.approx(0.3 + 0.0005 * 17.0**2, rel=1e-6)
@@ -121,7 +121,7 @@ def test_long_run_arrays_discards_reset_spike_before_lowpass():
 def test_lowpass_empty_and_short_long_run_arrays_are_empty():
     assert len(lowpass(np.array([]), 0.05, 5.0)) == 0
     rows = np.ones((10, 4))  # 0.5 s < the 1.0 s discard window
-    assert all(len(c) == 0 for c in long_run_arrays(rows, 0.05))
+    assert all(len(c) == 0 for c in long_run_arrays(rows, 0.05, skip=1.0))
 
 
 def test_fit_longitudinal_tolerates_empty_parts():
@@ -192,3 +192,26 @@ def test_invalid_reason_steady_state_applies_to_steps_only():
     seg.r[-20:] = 0.07 * (-1.0) ** np.arange(20)  # oscillating final window, std 0.07
     assert "not steady: r std" in invalid_reason(seg, 16.0)
     assert invalid_reason(seg, 16.0, steady=False) is None  # sweeps are not steady by design
+
+
+def _nonlinear_samples(rng, n=3000):
+    vx = rng.uniform(0.5, 24.0, n)
+    thr = rng.integers(1, 11, n) / 10
+    # accel a function of throttle^2 and fading with speed: far from linear in throttle
+    drive = 6.0 * thr**2 * (1.0 - 0.8 * vx / 25.0)
+    p = VehicleParams()
+    ax = drive - p.rolling - p.drag_coeff * vx**2
+    return LongSamples(vx, ax, thr, np.zeros(n)), p
+
+
+def test_table_fit_recovers_nonlinear_map_where_linear_fails():
+    from hybrid_av.vehicle.identify import throttle_r2
+
+    s, p = _nonlinear_samples(np.random.default_rng(2))
+    lm = fit_longitudinal(s, p)
+    assert lm.table_speeds and throttle_r2(s, p, lm) >= 0.9
+    assert (
+        throttle_r2(s, p, LongitudinalMap(lm.throttle_gain, lm.throttle_bias, lm.brake_gain, lm.coast_band))
+        < 0.9
+    )
+    assert all(np.all(np.diff(row) >= 0) and row[0] == 0.0 for row in lm.table_accels)

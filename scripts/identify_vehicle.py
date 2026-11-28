@@ -222,9 +222,25 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
         raise SystemExit(1)
 
 
+def hold_speed(sim, obs, v0, seconds=1.5, kp=0.3, ki=0.15):
+    """Closed-loop speed PI on throttle/brake to ride out the reset spike; not recorded. Returns the observation."""
+    integ = 0.2 if v0 > 0 else 0.0
+    for _ in range(round(seconds / sim.dt)):
+        err = v0 - obs.ego.vx
+        integ += ki * err * sim.dt
+        u = kp * err + integ
+        cmd = (
+            ActuatorCommand(0.0, 0.0, 0.5)
+            if v0 == 0
+            else ActuatorCommand(0.0, min(max(u, 0.0), 1.0), min(max(-u, 0.0), 1.0))
+        )
+        obs, _ = sim.step(cmd)
+    return obs
+
+
 def run_long(sim, rc, v0, seconds, cmd_of, stop=None):
-    """(vx, ax low-passed at 5 Hz, throttle, brake) per tick for one open-loop run."""
-    obs = sim.reset(plain_scenario(rc, v0))
+    """(vx, ax low-passed at 5 Hz, throttle, brake) per tick for one run: hold v0, then record the open-loop command."""
+    obs = hold_speed(sim, sim.reset(plain_scenario(rc, v0)), v0)
     rows = []
     for _ in range(round(seconds / sim.dt)):
         e = obs.ego
@@ -253,9 +269,9 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
     parts.append(coast)  # also gives the coast band
     cv, ca = coast[0], coast[1]
     if len(cv) == 0:
-        raise SystemExit("coastdown run left no samples after the 1 s discard; cannot fit rolling/drag")
+        raise SystemExit("coastdown run left no samples; cannot fit rolling/drag")
     short = sum(len(c[0]) == 0 for c in parts)
-    print(f"dropped {short} of {len(parts)} runs as too short (< 1 s after the reset discard)")
+    print(f"dropped {short} of {len(parts)} runs as empty")
     rolling, drag = fit_coastdown(cv[cv > 6.0], ca[cv > 6.0])
     p = dataclasses.replace(p, rolling=rolling, drag_coeff=drag)
     s = LongSamples(*(np.concatenate(c) for c in zip(*parts, strict=True)))
@@ -270,10 +286,6 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
         f"{lm}\nrolling {rolling:.4f} drag {drag:.6f} max_accel {p.max_accel:.2f} max_decel {p.max_decel:.2f} R2 {r2:.3f}"
     )
     problems = longitudinal_problems(p, lm, r2)
-    if r2 < 0.9:
-        print(
-            "throttle fit R2 < 0.9: switch LongitudinalMap to a 2-D table and add an expected-code-changes.md entry"
-        )
     if problems:
         raise SystemExit("longitudinal identification FAILED, nothing written: " + "; ".join(problems))
     out.parent.mkdir(parents=True, exist_ok=True)
