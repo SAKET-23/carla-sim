@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hybrid_av.config import make_run_dir
+from hybrid_av.config import load_dataclass, make_run_dir
 from hybrid_av.eval.metrics import steady_state_metrics
 from hybrid_av.eval.plots import plot_episode
 from hybrid_av.eval.runner import run_episode
@@ -89,6 +89,9 @@ def main() -> None:
     ap.add_argument("--backend", choices=["litesim", "carla"], default="litesim")
     ap.add_argument("--vehicle", type=Path, help="VehicleParams YAML (default: the built-in defaults)")
     ap.add_argument("--longitudinal-map", type=Path, help="LongitudinalMap YAML (default: the built-in map)")
+    ap.add_argument(
+        "--reference-config", type=Path, help="ReferenceConfig YAML (default: the built-in defaults)"
+    )
     ap.add_argument("--town", help="CARLA town (overrides the scenario's)")
     ap.add_argument("--route-set", help="carla_routes.yaml set, e.g. town10hd (key <family>_<set>)")
     ap.add_argument("--route-index", type=int, help="route in the set (default: seed %% set size)")
@@ -113,7 +116,8 @@ def main() -> None:
         ap.error(f"unknown source {a.source!r}")
     params = VehicleParams.from_yaml(a.vehicle) if a.vehicle else VehicleParams()
     lm = LongitudinalMap.from_yaml(a.longitudinal_map) if a.longitudinal_map else LongitudinalMap()
-    mpc, ref = MPCConfig(), ReferenceConfig()
+    mpc = MPCConfig()
+    ref = load_dataclass(ReferenceConfig, a.reference_config) if a.reference_config else ReferenceConfig()
     sc = make_scenario(a.family, a.seed)
     if a.backend == "carla":
         sc = carla_scenario(sc, a.family, a.seed, a.town, a.route_set, a.route_index)

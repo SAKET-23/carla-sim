@@ -50,6 +50,23 @@ def test_rule3_stop_point():
     assert np.all(ref.v <= cap + 1e-9) and ref.v[0] < 9.0 and np.all(ref.s <= 13.0 + 1e-9)
 
 
+def test_actuator_lag_brakes_earlier_same_stop_point():
+    route, kw = RouteBuilder.straight(300, 13.89), {"stop_s": 15.0}
+    base = G.generate(route, _ego(vx=10.0), 0.0, A1, 1.0, **kw)
+    same = ReferenceGenerator(ReferenceConfig(actuator_lag=0.0), MPCConfig()).generate(
+        route, _ego(vx=10.0), 0.0, A1, 1.0, **kw
+    )
+    lag = ReferenceGenerator(ReferenceConfig(actuator_lag=0.5), MPCConfig()).generate(
+        route, _ego(vx=10.0), 0.0, A1, 1.0, **kw
+    )
+    np.testing.assert_array_equal(base.v, same.v)
+    assert lag.v[0] < base.v[0] and np.all(lag.v <= base.v + 1e-9)
+    # the stop point itself is unchanged: at 13 m (stop_s - stop_buffer) both hold v = 0
+    for cfg in (ReferenceConfig(), ReferenceConfig(actuator_lag=0.5)):
+        at_stop = ReferenceGenerator(cfg, MPCConfig()).generate(route, _ego(vx=0.0), 13.0, A1, 1.0, **kw)
+        assert np.all(at_stop.v == 0.0)
+
+
 def test_rule3_brake_action():
     ref = G.generate(RouteBuilder.straight(300, 13.89), _ego(vx=10.0), 0.0, PolicyAction(1.0, 0.0, 0.8), 1.0)
     assert np.all(np.diff(ref.v) <= 1e-9) and ref.v[-1] < ref.v[0] - 1.0

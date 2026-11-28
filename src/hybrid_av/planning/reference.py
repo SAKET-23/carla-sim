@@ -17,6 +17,7 @@ class ReferenceConfig:
     lookahead_time_min: float = 0.0
     delta_y_rate: float = 1.0  # m/s, max rate the lateral offset may move along the horizon
     stop_buffer: float = 2.0  # m before a stop point
+    actuator_lag: float = 0.0  # s, drivetrain/brake response; the stop profile starts v * lag earlier
 
 
 class ReferenceGenerator:
@@ -61,7 +62,8 @@ class ReferenceGenerator:
                 vk += np.clip(np.interp(s[k - 1], s0 + g, cap_grid) - vk, -a_lon * dt, a_lon * dt)
                 s[k] = s[k - 1] + v[k - 1] * dt
             if stop is not None:
-                vk = min(vk, np.sqrt(2 * a_lon * max(stop - c.stop_buffer - s[k], 0.0)))
+                d_stop = max(stop - c.stop_buffer - s[k] - vk * c.actuator_lag, 0.0)
+                vk = min(vk, np.sqrt(2 * a_lon * d_stop))
             v[k] = vk
 
         # Rule 4: lateral offset ramp, clipped to own lane plus one adjacent.
