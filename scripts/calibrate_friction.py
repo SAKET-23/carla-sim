@@ -30,8 +30,9 @@ from hybrid_av.vehicle.params import VehicleParams
 
 CURVE = "-11.97,-204.81,0.0,-178.6:-84.97,-151.12,0.0"  # start x,y,z,yaw : goal x,y,z (CARLA coords)
 CURVE_R, CURVE_KAPPA, MAX_CROSS = 32.6, 1 / 40, 1.0  # m, 1/m (curve section), m
-SPEEDS = tuple(float(v) for v in range(6, 18))  # m/s
-SCALES = (1.0, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2)
+SPEEDS = tuple(4.0 + 0.5 * i for i in range(27))  # m/s, 4.0 ... 17.0
+# pod G2: k >= 0.3 never slid below the 17 m/s cap on R 32.6 m (a_lat_max there is v^2/R, not grip); 0.2 slid at 15 m/s
+SCALES = (0.3, 0.25, 0.2, 0.15, 0.12, 0.1, 0.08)
 KEY = "carla_tire_friction_scale"
 
 
@@ -116,14 +117,16 @@ def main(argv=None) -> None:
     v_hold = math.sqrt(a.target_mu * G * CURVE_R)
     try:
         runs = {k: curve_run(sim, rc, k, params, lm) for k in SCALES}
-        curve = {k: r[0] for k, r in runs.items()}
+        # only grip-limited scales: a scale that never slid measured the speed cap, not the tyres
+        curve = {k: r[0] for k, r in runs.items() if r[1] is not None}
         print(
             "a_lat_max(k):",
-            {k: round(v, 2) for k, v in curve.items()},
+            {k: round(r[0], 2) for k, r in runs.items()},
             "first slide (m/s):",
             {k: r[1] for k, r in runs.items()},
-            f"dry effective mu {curve[1.0] / G:.2f}",
         )
+        if len(curve) < 2:
+            raise SystemExit(f"fewer than 2 scales slid below {SPEEDS[-1]} m/s: extend SCALES downward")
         k_star = friction_scale_for(curve, a.target_mu * G)  # raises if the curve is not monotone
         repeats = [curve_run(sim, rc, k_star, params, lm)[0] for _ in range(a.repeats)]
         # at k*, sqrt(target_mu g R) must be held and 1.2x that must slide

@@ -103,9 +103,11 @@ def test_off_road_counts_as_slide():
 def test_run_returns_largest_held_peak_and_first_slide_speed():
     sim = FakeSim()
     a, first = cal.curve_run(sim, cal.parse_curve(cal.CURVE, "T"), 0.35, None, None)
-    assert first == 10.0  # 16.5*sqrt(0.35) = 9.76: 9 held, 10 slides
-    assert abs(a - 9.0**2 / R) < 0.2
-    assert sim.resets == 5  # 6..10 m/s, one fresh reset each, sweep stops at the first slide
+    assert first == 10.0  # 16.5*sqrt(0.35) = 9.76: 9.5 held, 10 slides
+    assert abs(a - 9.5**2 / R) < 0.2
+    assert (
+        sim.resets == 13
+    )  # 4.0..10.0 m/s in 0.5 steps, one fresh reset each, sweep stops at the first slide
 
 
 def test_main_writes_k_star_and_report(monkeypatch, tmp_path):
