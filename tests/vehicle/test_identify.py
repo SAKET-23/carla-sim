@@ -118,6 +118,24 @@ def test_long_run_arrays_discards_reset_spike_before_lowpass():
     assert rolling + drag * 17.0**2 == pytest.approx(0.3 + 0.0005 * 17.0**2, rel=1e-6)
 
 
+def test_lowpass_empty_and_short_long_run_arrays_are_empty():
+    assert len(lowpass(np.array([]), 0.05, 5.0)) == 0
+    rows = np.ones((10, 4))  # 0.5 s < the 1.0 s discard window
+    assert all(len(c) == 0 for c in long_run_arrays(rows, 0.05))
+
+
+def test_fit_longitudinal_tolerates_empty_parts():
+    rng = np.random.default_rng(1)
+    vx, ax = rng.uniform(3.0, 20.0, 400), rng.uniform(-3.0, 2.0, 400)
+    p = VehicleParams()
+    need = ax + p.rolling + p.drag_coeff * vx**2
+    thr = np.clip(np.where(need > 0, 0.12 + 0.30 * need, 0.0), 0, 1)
+    brk = np.clip(np.where(need <= 0, 0.25 * -need, 0.0), 0, 1)
+    parts = [(vx, ax, thr, brk), tuple(np.empty(0) for _ in range(4))]
+    s = LongSamples(*(np.concatenate(c) for c in zip(*parts, strict=True)))
+    assert fit_longitudinal(s, p).throttle_gain == pytest.approx(0.30, rel=0.05)
+
+
 def test_longitudinal_problems_flags_each_garbage_value():
     p, lm = (
         replace(VehicleParams(), rolling=0.2, drag_coeff=0.0006, max_decel=6.0),

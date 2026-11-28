@@ -132,6 +132,8 @@ def fit_lateral(
 def lowpass(x: np.ndarray, dt: float, fc: float) -> np.ndarray:
     alpha = dt / (dt + 1.0 / (2.0 * math.pi * fc))
     y = np.empty(len(x))
+    if len(x) == 0:
+        return y
     y[0] = x[0]
     for i in range(1, len(x)):
         y[i] = y[i - 1] + alpha * (x[i] - y[i - 1])
@@ -141,10 +143,10 @@ def lowpass(x: np.ndarray, dt: float, fc: float) -> np.ndarray:
 def long_run_arrays(
     rows: np.ndarray, dt: float, skip: float = 1.0
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """(vx, ax, throttle, brake) from rows of (vx, ax, throttle, brake), dropping the first `skip` s then low-passing ax.
+    """(vx, ax, throttle, brake) from rows of (vx, ax, throttle, brake), dropping the first `skip` s then low-passing ax (empty arrays when the run is shorter than `skip`).
 
     set_target_velocity at reset makes get_acceleration spike to about v0/dt, so the transient goes before the filter."""
-    a = np.asarray(rows)[round(skip / dt) :]
+    a = np.asarray(rows).reshape(-1, 4)[round(skip / dt) :]
     return a[:, 0], lowpass(a[:, 1], dt, 5.0), a[:, 2], a[:, 3]
 
 

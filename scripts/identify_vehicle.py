@@ -252,6 +252,10 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
     coast = run_long(sim, rc, 20.0, 15.0, lambda e: (0.0, 0.0), lambda e: e.vx < 5.0)
     parts.append(coast)  # also gives the coast band
     cv, ca = coast[0], coast[1]
+    if len(cv) == 0:
+        raise SystemExit("coastdown run left no samples after the 1 s discard; cannot fit rolling/drag")
+    short = sum(len(c[0]) == 0 for c in parts)
+    print(f"dropped {short} of {len(parts)} runs as too short (< 1 s after the reset discard)")
     rolling, drag = fit_coastdown(cv[cv > 6.0], ca[cv > 6.0])
     p = dataclasses.replace(p, rolling=rolling, drag_coeff=drag)
     s = LongSamples(*(np.concatenate(c) for c in zip(*parts, strict=True)))
