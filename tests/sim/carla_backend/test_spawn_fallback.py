@@ -40,6 +40,9 @@ def test_fallback_used_when_no_route(fake_carla, tmp_path, caplog):
         sim = _reset({}, tmp_path, seed=0)
     assert 300.0 <= sim.route().length <= 600.0
     assert "no route in carla_routes.yaml" in caplog.text
+    assert (
+        "spawn point 0 [0.0, 20.0, 0.0] -> [" in caplog.text
+    )  # IC-37: the log named only the goal as "spawn point 0"
 
 
 def test_configured_route_wins(fake_carla, tmp_path, caplog):

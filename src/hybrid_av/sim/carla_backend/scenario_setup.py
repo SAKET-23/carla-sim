@@ -16,6 +16,7 @@ from hybrid_av.types import EgoState, ObjectClass
 
 _DEFAULT_SPEED_LIMIT = 30.0 / 3.6  # m/s, town default when the route cache has no limits
 _STOP_MATCH = 1.5  # m, a light's stop waypoint must lie this close to a route waypoint of the same lane
+_START_SNAP = 5.0  # m, the planner's first waypoint must lie this close to the start pose
 _CROSS_ID = 1000  # ActorManager numbers cross-stream vehicles 1000 * actor_id + n
 _GROUND_CLEARANCE = 0.5  # m, spawn height above the road so a vehicle does not clip into it
 _BLUEPRINT = {
@@ -58,7 +59,23 @@ def trace_waypoints(world_map, start, goal, resolution: float = 1.0, planner=Non
             raise ValueError(
                 f"lane change in the route at waypoint {i}: choose a start/goal pair without one"
             )
-    return [wp for wp, _ in trace]
+    wps = []
+    for wp, _ in trace:
+        loc, fwd = wp.transform.location, math.radians(wp.transform.rotation.yaw)
+        if wps:
+            # IC-17: drop waypoints the planner emits behind the last kept one (waypoint-forward test); they would
+            # make the polyline double back and the heading jump by pi
+            prev = wps[-1].transform.location
+            if (loc.x - prev.x) * math.cos(fwd) + (loc.y - prev.y) * math.sin(fwd) <= 0.0:
+                continue
+        wps.append(wp)
+    # IC-37: the ego spawns at `start`; a route that begins elsewhere (other road, other lane) is never reached
+    d = math.dist(start[:2], (wps[0].transform.location.x, wps[0].transform.location.y))
+    if d > _START_SNAP:
+        raise ValueError(
+            f"route starts {d:.1f} m from the start pose {list(start[:3])}: choose another start"
+        )
+    return wps
 
 
 def spawn_point_route(world_map, seed: int, length=(300.0, 600.0)) -> dict:

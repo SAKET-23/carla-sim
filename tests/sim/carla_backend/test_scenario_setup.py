@@ -169,3 +169,26 @@ def test_director_cross_stream_is_driven_every_tick_and_destroyed_after_passing(
     assert seen
     assert len(session.actors) < len(seen)  # some passed the junction and were destroyed
     assert all(not hasattr(v, "autopilot") for v in session.actors)
+
+
+def _xs_trace(fake_carla, xs):
+    trace = fake_carla.straight_trace(n=len(xs))
+    for (wp, _), x in zip(trace, xs, strict=True):
+        wp.transform.location.x = float(x)
+    return trace
+
+
+def test_route_drops_planner_waypoints_that_step_backwards(fake_carla):
+    # IC-17: the planner's first waypoint (x=5) is followed by ones behind it (3, 4) before the route moves on;
+    # kept as is, the polyline reverses and the heading jumps by pi
+    fake_carla.planner_trace = _xs_trace(fake_carla, [5, 3, 4, 5, 6, 7, 8, 9, 10])
+    r = build_route(fake_carla.last_or_new_world().get_map(), [5, 0, 0, 0], [10, 0, 0])
+    assert np.max(np.abs(np.diff(r.psi))) < 0.3
+    assert r.length == pytest.approx(5.0, abs=0.5) and r.x[0] == pytest.approx(5.0)
+
+
+def test_route_rejects_a_start_far_from_the_first_waypoint(fake_carla):
+    # IC-37: the planner snapped to a road 7 m from the spawn pose, so the ego never saw the route
+    fake_carla.planner_trace = _xs_trace(fake_carla, [7, 8, 9, 10])
+    with pytest.raises(ValueError, match="start"):
+        build_route(fake_carla.last_or_new_world().get_map(), [0, 0, 0, 0], [10, 0, 0])

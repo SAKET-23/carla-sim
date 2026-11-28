@@ -121,7 +121,10 @@ class CarlaSim:
         if rc.get("spawn_fallback"):
             rc = spawn_point_route(wmap, sc.seed)
             log.warning(
-                "no route in carla_routes.yaml: using spawn point 0 -> %s on %s", rc["goal"], rc["town"]
+                "no route in carla_routes.yaml: using spawn point 0 %s -> %s on %s",
+                rc["start"][:3],
+                rc["goal"],
+                rc["town"],
             )
         wps = trace_waypoints(wmap, rc["start"], rc["goal"])
         self._route = route_from_waypoints(wps, rc.get("cache"))
