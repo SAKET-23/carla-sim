@@ -9,6 +9,8 @@ from hybrid_av.config import load_dataclass
 from hybrid_av.types import ActuatorCommand, Control
 from hybrid_av.vehicle.params import VehicleParams
 
+HOLD_SPEED, HOLD_BRAKE = 0.3, 0.3  # table path: below this speed a non-positive request holds the car
+
 
 @dataclass(frozen=True, slots=True)
 class LongitudinalMap:
@@ -30,7 +32,10 @@ class LongitudinalMap:
 
 def _net_accels(lm: LongitudinalMap, vx: float) -> np.ndarray:
     """Net accel per table throttle level at `vx` (interpolated across the speed nodes)."""
-    return np.array([np.interp(abs(vx), lm.table_speeds, col) for col in zip(*lm.table_accels, strict=True)])
+    net = np.array([np.interp(abs(vx), lm.table_speeds, col) for col in zip(*lm.table_accels, strict=True)])
+    if abs(vx) < lm.table_speeds[0]:  # coast decel is ~proportional to speed: goes to 0 at standstill
+        net[0] = lm.table_accels[0][0] * abs(vx) / lm.table_speeds[0]
+    return net
 
 
 def coast_accel(lm: LongitudinalMap, vx: float) -> float:
@@ -52,8 +57,12 @@ def control_to_actuator(u: Control, vx: float, p: VehicleParams, lm: Longitudina
     throttle = brake = 0.0
     if lm.table_speeds:
         a0 = coast_accel(lm, vx)
-        if u.ax >= a0 - lm.coast_band:
+        if abs(vx) < HOLD_SPEED and u.ax <= 0:  # standstill hold
+            brake = HOLD_BRAKE
+        elif u.ax >= a0:
             throttle = drive_throttle(lm, vx, u.ax)
+        elif u.ax >= a0 - lm.coast_band:
+            pass  # coast
         else:
             brake = float(np.clip(lm.brake_gain * (a0 - u.ax), 0.0, 1.0))
     elif abs(u.ax) >= lm.coast_band:

@@ -84,3 +84,23 @@ def test_table_yaml_round_trip(tmp_path):
     f = tmp_path / "lm.yaml"
     f.write_text(yaml.safe_dump(__import__("dataclasses").asdict(lm)))
     assert load_dataclass(LongitudinalMap, f) == lm
+
+
+def _low_lm():  # lowest node 0.77 m/s with coast accel -0.43 (the CARLA calibrated table's shape)
+    thr = (0.0, 0.1, 0.5, 1.0)
+    return LongitudinalMap(
+        table_speeds=(0.77, 10.0),
+        table_throttles=thr,
+        table_accels=((-0.43, -0.12, 2.0, 5.0), (-3.8, -3.0, 0.5, 3.0)),
+    )
+
+
+def test_table_standstill_holds_instead_of_creeping():
+    c = control_to_actuator(Control(0.0, -0.2), 0.09, P, _low_lm())
+    assert c.throttle == 0.0 and c.brake > 0.0
+
+
+def test_table_low_speed_launch_and_mild_decel_still_throttle():
+    lm = _low_lm()
+    assert control_to_actuator(Control(0.0, 0.5), 0.1, P, lm).throttle > 0.0
+    assert 0.0 < control_to_actuator(Control(0.0, -3.0), 10.0, P, lm).throttle < 0.2
