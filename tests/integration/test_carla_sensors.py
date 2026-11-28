@@ -85,7 +85,8 @@ def test_radar_signs(make_sim, points):
         tl = target.get_transform().location
         dist = math.hypot(tl.x - ego_tf.location.x - 2.4, tl.y - ego_tf.location.y)
         for d in dets:
-            if abs(d.depth - dist) < 2.0 and d.azimuth > 0.0:
+            # moving returns only: static clutter at the same depth reads 0 m/s (pod probe: target -5.0, clutter 0.0)
+            if abs(d.depth - dist) < 2.0 and d.azimuth > 0.0 and abs(d.velocity) > 1.0:
                 azs.append(d.azimuth)
                 ratio.append(abs(abs(d.velocity) - 5.0 * math.cos(d.azimuth)) if d.velocity < 0 else 99.0)
     assert azs, "no front-radar detection on the target (azimuth > 0)"
@@ -178,13 +179,12 @@ def test_sensor_transforms(make_sim, points):
     ]
     assert len(attached) == len(specs)
     ego_tf = sim.ego.get_transform()
-    yaw_e = math.radians(ego_tf.rotation.yaw)
+    # full inverse (roll/pitch too): a yaw-only frame put a 0.5 deg road pitch into x/z (1.4 cm, pod G2)
+    inv = np.array(ego_tf.get_inverse_matrix())
     for actor, spec in zip(attached, specs, strict=True):
         tf, m = actor.get_transform(), spec["mount"]
-        dx, dy = tf.location.x - ego_tf.location.x, tf.location.y - ego_tf.location.y
-        rx = dx * math.cos(yaw_e) + dy * math.sin(yaw_e)  # CARLA frame, body axes
-        ry = -dx * math.sin(yaw_e) + dy * math.cos(yaw_e)
-        lib = (rx, -ry, tf.location.z - ego_tf.location.z)
+        rx, ry, rz, _ = inv @ np.array([tf.location.x, tf.location.y, tf.location.z, 1.0])
+        lib = (rx, -ry, rz)
         yaw = convert.yaw_to_lib(tf.rotation.yaw - ego_tf.rotation.yaw)
         assert lib == pytest.approx((m["x"], m["y"], m["z"]), abs=0.01), spec["id"]
         d = (yaw - m["yaw"] + math.pi) % (2 * math.pi) - math.pi

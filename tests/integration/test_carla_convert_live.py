@@ -16,10 +16,17 @@ def test_pose_matches_transform(make_sim, points):
     """IC-05 — see Plan/06-integration/integration-check.md; likely fix: ECC-04."""
     x, y, z, _ = points["straight"]
     rc = straight_route(points, "Town03_Opt") | {"start": [x, y, z, 30.0]}
-    obs = make_sim().reset(plain_scenario(rc))
-    assert obs.ego.x == pytest.approx(x, abs=1e-3)
-    assert obs.ego.y == pytest.approx(-y, abs=1e-3)
-    assert obs.ego.psi == pytest.approx(-math.radians(30.0), abs=1e-3)
+    sim = make_sim()
+    obs = sim.reset(plain_scenario(rc))
+    # against the actor's own transform: reset snaps the spawn to the lane centre (mm here), not the yaw
+    tf = sim.ego.get_transform()
+    assert obs.ego.x == pytest.approx(tf.location.x, abs=1e-3)
+    assert obs.ego.y == pytest.approx(-tf.location.y, abs=1e-3)
+    assert obs.ego.psi == pytest.approx(-math.radians(tf.rotation.yaw), abs=1e-3)
+    assert (
+        tf.rotation.yaw == pytest.approx(30.0, abs=0.5)
+        and math.hypot(tf.location.x - x, tf.location.y - y) < 0.05
+    )
 
 
 @pytest.fixture(scope="module")
