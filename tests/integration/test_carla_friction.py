@@ -3,6 +3,7 @@
 import importlib.util
 
 import pytest
+import yaml
 
 from hybrid_av.sim.base import FrictionZone
 from hybrid_av.sim.carla_backend.routes import plain_scenario, straight_route
@@ -70,8 +71,10 @@ def test_low_friction_limits_lateral_accel(make_sim):
     rc = cal.parse_curve(cal.CURVE, "Town03_Opt")
     params = VehicleParams(max_steer_wheel=0.7)
     dry, _ = cal.curve_run(sim, rc, 1.0, params, LongitudinalMap())
-    wet, _ = cal.curve_run(
-        sim, rc, 0.35, params, LongitudinalMap()
-    )  # the zone scale; the calibrated one comes later
+    # the zone scale is the calibrated k* (calibration.md §3); before G2 Task 4 stores it, 0.35 (pod: 0.64 x dry)
+    k = yaml.safe_load((ROOT / "configs/scenarios/wet_curve.yaml").read_text()).get(
+        "carla_tire_friction_scale", 0.35
+    )
+    wet, _ = cal.curve_run(sim, rc, k, params, LongitudinalMap())
     print(f"a_lat_max dry {dry:.2f} wet {wet:.2f}")
     assert wet <= 0.6 * dry

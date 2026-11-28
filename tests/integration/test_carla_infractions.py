@@ -80,6 +80,7 @@ def test_off_road(make_sim, points):
         if first_off is not None:
             break
     assert first_side is not None and first_off is not None and first_off - first_side <= 3
+    sim.close()  # one live session at a time: the next ego spawns on the same spot (spawn collision on the pod)
 
     sim2, obs = straight_sim(make_sim, points, speed=5.0)  # adjacent lane: legal, not off-road
     drv = Driver(sim2, 5.0, 0.03)
@@ -88,6 +89,7 @@ def test_off_road(make_sim, points):
         wp = sim2._wmap.get_waypoint(sim2.ego.get_transform().location, project_to_road=False)
         if wp is not None and wp.lane_type == carla.LaneType.Driving:
             assert not info.off_road
+    sim2.close()
 
     sim3, obs = straight_sim(make_sim, points)  # more than 30 m from the route
     tf = sim3.ego.get_transform()
@@ -111,6 +113,7 @@ def test_blocked_timeout(make_sim, points):
         if info.blocked and first is None:
             first = k
     assert first is not None and 3600 <= first <= 3610
+    sim.close()  # its ego still occupies the spawn point sim2 uses (IC-27 spawn collision on the pod)
     sim2 = make_sim(no_rendering=True)  # a short time limit: timeout fires at t >= limit
     sim2.reset(dataclasses.replace(plain_scenario(straight_route(points, "Town03_Opt")), time_limit=5.0))
     infos = [sim2.step(ActuatorCommand(0.0, 0.0, 1.0))[1] for _ in range(110)]
