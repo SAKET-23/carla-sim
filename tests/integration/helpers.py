@@ -82,7 +82,7 @@ def signalised_route(world, points):
     import carla
 
     start = points["signalised_junction"]
-    for light in world.get_traffic_lights():
+    for light in world.get_actors().filter("traffic.traffic_light*"):  # 0.9.16 has no get_traffic_lights
         for stop in light.get_stop_waypoints():
             back = stop.previous(90.0)
             if back and back[0].transform.location.distance(carla.Location(*start[:3])) < 5.0:
