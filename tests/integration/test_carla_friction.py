@@ -66,6 +66,8 @@ def test_low_friction_limits_lateral_accel(make_sim, points):
     from hybrid_av.vehicle.actuation import LongitudinalMap
     from hybrid_av.vehicle.params import VehicleParams
 
+    if not points.get("open_area"):
+        pytest.skip("no open_area on this map: IC-23 moves to the road-curve calibration")
     sim = make_sim(no_rendering=True)
     rc = cal.circle_start(points, "Town03_Opt")
     params = VehicleParams(max_steer_wheel=0.7)

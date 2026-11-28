@@ -188,7 +188,9 @@ def main(argv=None) -> None:
             "open_area": open_area(world, wmap),
             "signalised_junction": signalised_junction(world),
         }
-        missing = [k for k, v in points.items() if v is None]
+        # open_area is optional: Town03_Opt has no flat free R=30 m ring (G2 probe), so the friction calibration
+        # drives a road curve instead; the tests that need it skip when it is null
+        missing = [k for k, v in points.items() if v is None and k != "open_area"]
         if missing:
             raise SystemExit(f"no candidate found for {missing}")
         a.fixture.parent.mkdir(parents=True, exist_ok=True)

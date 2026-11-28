@@ -39,6 +39,8 @@ KEY = "carla_tire_friction_scale"
 def circle_start(points: dict, town: str) -> dict:
     """carla_route whose start is on a left-turning circle of R = 30 m centred on the open area; the goal is a road
     point (the planner needs one; the circle itself is not a road)."""
+    if not points.get("open_area"):
+        raise SystemExit("fixture has no open_area (none on this map): the circle calibration needs one")
     cx, cy, cz = points["open_area"]
     lx, ly, _ = convert.loc_to_lib(cx, cy, cz)
     sx, sy, sz = convert.lib_to_loc(
