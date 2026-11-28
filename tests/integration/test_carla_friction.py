@@ -56,8 +56,8 @@ def test_other_vehicles_unchanged(make_sim, points):
     assert inside and all(o == pytest.approx(other_base, abs=1e-6) for o in inside)
 
 
-def test_low_friction_limits_lateral_accel(make_sim, points):
-    """IC-23 — see Plan/06-integration/integration-check.md; likely fix: ECC-16/ECC-17. Short circle test (calibration.md §3)."""
+def test_low_friction_limits_lateral_accel(make_sim):
+    """IC-23 — see Plan/06-integration/integration-check.md; likely fix: ECC-16/ECC-17. Road-curve test (calibration.md §3)."""
     spec = importlib.util.spec_from_file_location(
         "calibrate_friction", ROOT / "scripts/calibrate_friction.py"
     )
@@ -66,13 +66,11 @@ def test_low_friction_limits_lateral_accel(make_sim, points):
     from hybrid_av.vehicle.actuation import LongitudinalMap
     from hybrid_av.vehicle.params import VehicleParams
 
-    if not points.get("open_area"):
-        pytest.skip("no open_area on this map: IC-23 moves to the road-curve calibration")
     sim = make_sim(no_rendering=True)
-    rc = cal.circle_start(points, "Town03_Opt")
+    rc = cal.parse_curve(cal.CURVE, "Town03_Opt")
     params = VehicleParams(max_steer_wheel=0.7)
-    dry = cal.circle_run(sim, rc, 1.0, params, LongitudinalMap())
-    wet = cal.circle_run(
+    dry, _ = cal.curve_run(sim, rc, 1.0, params, LongitudinalMap())
+    wet, _ = cal.curve_run(
         sim, rc, 0.35, params, LongitudinalMap()
     )  # the zone scale; the calibrated one comes later
     print(f"a_lat_max dry {dry:.2f} wet {wet:.2f}")
