@@ -1,4 +1,4 @@
-"""Metric definitions from Plan/07-evaluation/metrics.md (unmasked; steady-state masking arrives in G2)."""
+"""Metric definitions from Plan/07-evaluation/metrics.md (the base metrics are unmasked; the *_ss variants use steady_state_mask)."""
 
 import numpy as np
 
@@ -40,3 +40,34 @@ def ood_failed(result, family: str) -> bool:
     if family == "merge_deadlock":
         return result.deadlock or result.route_completion < 1
     return any(v != 0 for v in inf.values()) or result.route_completion < 1
+
+
+def steady_state_mask(trace: dict[str, np.ndarray], scenario, dt: float = 0.05) -> np.ndarray:
+    """True = step kept. Drops the first 5 s, junction windows (+-5 m), brake_flag >= 0.5 and MPC fallbacks."""
+    n = len(trace["route_s"])
+    t = trace["t"] if "t" in trace else np.arange(n) * dt
+    keep = (t >= 5.0) & (trace["brake_flag"] < 0.5) & (trace["mpc_status"] < 2)  # status >= 2: fallback_*
+    for entry, exit_ in scenario.junction_s:
+        keep &= ~((trace["route_s"] >= entry - 5.0) & (trace["route_s"] <= exit_ + 5.0))
+    return keep
+
+
+def steady_state_metrics(trace: dict[str, np.ndarray], scenario, dt: float = 0.05) -> dict[str, float]:
+    """Tracking metrics on the steady-state steps; NaN when too few steps are kept."""
+    m = steady_state_mask(trace, scenario, dt)
+    nan = float("nan")
+    k = int(m.sum())
+    return {
+        "cross_track_rmse_ss": cross_track_rmse(trace["cross_track"][m]) if k else nan,
+        "heading_rmse_deg_ss": heading_rmse_deg(trace["heading_err"][m]) if k else nan,
+        "steering_jerk_rms_ss": _segment_jerk_rms(trace["delta"], m, dt),
+        "mask_fraction": float(1.0 - m.mean()) if len(m) else nan,
+    }
+
+
+def _segment_jerk_rms(delta: np.ndarray, keep: np.ndarray, dt: float) -> float:
+    """Jerk RMS pooled over contiguous kept runs only; differencing across a masked gap would add a fake spike."""
+    edges = np.flatnonzero(np.diff(np.r_[0, keep.astype(np.int8), 0]))
+    j = [np.diff(delta[a:b], n=3) / dt**3 for a, b in zip(edges[::2], edges[1::2]) if b - a >= 4]
+    j = np.concatenate(j) if j else np.empty(0)
+    return float(np.sqrt(np.mean(j**2))) if len(j) else float("nan")

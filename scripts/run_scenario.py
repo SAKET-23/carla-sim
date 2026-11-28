@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from hybrid_av.config import make_run_dir
+from hybrid_av.eval.metrics import steady_state_metrics
 from hybrid_av.eval.plots import plot_episode
 from hybrid_av.eval.runner import run_episode
 from hybrid_av.mpc.controller import MPCConfig
@@ -148,6 +149,7 @@ def main() -> None:
     )
     np.savez(d / "trace.npz", **res.trace)
     meta = {k: v for k, v in dataclasses.asdict(res).items() if k != "trace"}
+    meta.update(steady_state_metrics(res.trace, sc, sim.dt))
     (d / "metrics.json").write_text(json.dumps(meta, indent=2))
     plot_episode(res, route, d / "episode.png")
     print(
