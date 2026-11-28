@@ -244,7 +244,9 @@ def fit_drive_table(s: LongSamples, edges=SPEED_EDGES):
             continue
         v = float(np.mean(s.vx[m]))
         c = coast & in_bin
-        a0 = float(np.mean(s.ax[c])) if c.sum() >= 5 else -k * v
+        a0 = (
+            float(np.mean(s.ax[c]) / np.mean(s.vx[c]) * v) if c.sum() >= 5 else -k * v
+        )  # a ~ vx within the bin
         mean = [float(np.mean(s.ax[m & (level == j)])) for j in have]
         acc = np.interp(levels, [0, *have], [a0, *mean])
         speeds.append(v)
