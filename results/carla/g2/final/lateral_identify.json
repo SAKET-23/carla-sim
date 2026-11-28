@@ -1,0 +1,28 @@
+{
+  "fit": {
+    "vy_rmse": 0.021587223730041766,
+    "r_rmse": 0.006685188391659562,
+    "understeer_K": 0.0004636772808077243
+  },
+  "held_out": {
+    "vy_rmse": 0.04456116572019884,
+    "r_rmse": 0.0028208686519373464
+  },
+  "gain_err": [
+    0.030470267600400947,
+    0.030453490173681264,
+    0.027090075012027093,
+    0.02380323787409
+  ],
+  "steer_rate": 2.4564193953136826,
+  "pass": true,
+  "excluded": [
+    "step v=8 delta=-0.0939: not steady: r std 0.021 > 0.02 rad/s",
+    "step v=8 delta=-0.1408: not steady: r std 0.030 > 0.02 rad/s",
+    "step v=12 delta=-0.0417: collided",
+    "step v=12 delta=-0.0626: collided",
+    "step v=16 delta=-0.0235: not steady: r std 0.071 > 0.02 rad/s",
+    "step v=16 delta=-0.0352: not steady: r std 0.044 > 0.02 rad/s",
+    "sweep 0: collided"
+  ]
+}
