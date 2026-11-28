@@ -86,19 +86,23 @@ def obstacles_unloaded(sim):
     """Unload the roadside layers so excursions off the lane do not collide; reload them on exit."""
     import carla
 
-    layers = (
-        carla.MapLayer.Buildings
-        | carla.MapLayer.Props
-        | carla.MapLayer.StreetLights
-        | carla.MapLayer.Walls
-        | carla.MapLayer.Foliage
-        | carla.MapLayer.ParkedVehicles
-    )  # fmt: skip  (not Ground: the car stays on terrain)
-    sim.world.unload_map_layer(layers)
+    # one call per layer with the enum member: OR-ing them gives an int the binding rejects
+    # (not Ground: the car stays on terrain)
+    layers = [
+        carla.MapLayer.Buildings,
+        carla.MapLayer.Props,
+        carla.MapLayer.StreetLights,
+        carla.MapLayer.Walls,
+        carla.MapLayer.Foliage,
+        carla.MapLayer.ParkedVehicles,
+    ]
+    for layer in layers:
+        sim.world.unload_map_layer(layer)
     try:
         yield
     finally:
-        sim.world.load_map_layer(layers)
+        for layer in layers:
+            sim.world.load_map_layer(layer)
 
 
 def chirp(f0, f1, T, amp=0.05):

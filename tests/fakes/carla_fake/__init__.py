@@ -8,7 +8,7 @@ import copy
 import fnmatch
 import itertools
 import math
-from enum import Enum, IntFlag
+from enum import Enum
 
 from . import command  # noqa: F401  (carla.command)
 
@@ -133,7 +133,7 @@ class LaneType(Enum):
     Any = -2
 
 
-class MapLayer(IntFlag):
+class MapLayer(Enum):
     NONE = 0
     Buildings = 1
     Decals = 2

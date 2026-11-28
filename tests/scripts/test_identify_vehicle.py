@@ -26,9 +26,10 @@ def test_step_deltas_hit_target_lateral_accelerations(v):
 def test_obstacle_layers_unloaded_then_reloaded(fake_carla):
     sim = SimpleNamespace(world=fake_carla.FakeWorld())
     ml = fake_carla.MapLayer
-    want = ml.Buildings | ml.Props | ml.StreetLights | ml.Walls | ml.Foliage | ml.ParkedVehicles
+    want = [ml.Buildings, ml.Props, ml.StreetLights, ml.Walls, ml.Foliage, ml.ParkedVehicles]
     with iv.obstacles_unloaded(sim):
-        assert sim.world.unloaded_layers == [want]
+        assert sim.world.unloaded_layers == want
+        assert all(isinstance(x, ml) for x in sim.world.unloaded_layers)
         assert not hasattr(sim.world, "loaded_layers")
-    assert sim.world.loaded_layers == [want]
-    assert not want & ml.Ground
+    assert sim.world.loaded_layers == want
+    assert ml.Ground not in sim.world.loaded_layers
