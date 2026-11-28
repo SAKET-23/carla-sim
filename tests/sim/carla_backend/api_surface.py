@@ -88,6 +88,7 @@ API_SURFACE: frozenset[str] = frozenset(
         "ActorBlueprint",
         "command",
         "command.DestroyActor",
+        "MapLayer.ParkedVehicles",
         "LaneType.Driving",
         "LaneType.Sidewalk",
         "LaneType.Any",
@@ -122,6 +123,7 @@ API_SURFACE: frozenset[str] = frozenset(
         "get_random_location_from_navigation",
         "get_traffic_lights_in_junction",
         "set_weather",
+        "unload_map_layer",
     )
     | _cls(
         "WorldSettings",

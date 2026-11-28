@@ -61,3 +61,15 @@ def test_unreachable_n_names_short_towns(fake_carla, tmp_path, capsys):
     rc, doc = _run(tmp_path, "Town01", 100000)
     assert rc != 0 and "Town01" in capsys.readouterr().err
     assert 0 < len(doc["routes"]) <= 400
+
+
+def test_start_far_from_first_waypoint_rejected_like_the_simulator(fake_carla, tmp_path, capsys):
+    from tests.fakes.carla_fake.agents.navigation.local_planner import RoadOption
+
+    mk = lambda x: (fake_carla.Map("m").get_waypoint(fake_carla.Location(x, 500, 0)), RoadOption.LANEFOLLOW)
+    fake_carla.planner_trace = [
+        mk(0),
+        mk(400),
+    ]  # 400 m long, no lane change, but 480+ m from every spawn point
+    rc, doc = _run(tmp_path, "Town01", 1)
+    assert rc != 0 and doc["routes"] == []

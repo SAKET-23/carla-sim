@@ -192,3 +192,31 @@ def test_route_rejects_a_start_far_from_the_first_waypoint(fake_carla):
     fake_carla.planner_trace = _xs_trace(fake_carla, [7, 8, 9, 10])
     with pytest.raises(ValueError, match="start"):
         build_route(fake_carla.last_or_new_world().get_map(), [0, 0, 0, 0], [10, 0, 0])
+
+
+_LEAD = {"s0": 30.0, "v_cruise": 8.0, "brake_t": -1.0, "brake_to": 0.0, "brake_decel": 3.0}
+_PARKED = {"s": 50.0, "lateral": 3.0, "length": 4.5, "width": 1.9}
+
+
+def test_spawn_retries_with_the_actor_lifted(fake_carla):
+    session, director = _director(fake_carla, ScriptedActor(2, ObjectClass.CAR, "parked", _PARKED))
+    session.world.spawn_failures = 2
+    (car,) = director.spawn()
+    z = [t.location.z for t in session.world.try_spawn_poses]
+    assert z[1] - z[0] == pytest.approx(0.5) and z[2] - z[0] == pytest.approx(1.0)
+    assert car.get_transform().location.z == z[2] and director.skipped == []
+
+
+def test_parked_is_skipped_with_a_warning_after_three_failures(fake_carla):
+    session, director = _director(fake_carla, ScriptedActor(2, ObjectClass.CAR, "parked", _PARKED))
+    session.world.spawn_failures = 3
+    with pytest.warns(UserWarning, match="2"):
+        assert director.spawn() == []
+    assert director.skipped == [2] and len(session.world.try_spawn_poses) == 3
+
+
+def test_lead_raises_naming_id_and_pose_after_three_failures(fake_carla):
+    session, director = _director(fake_carla, ScriptedActor(1, ObjectClass.CAR, "lead", _LEAD))
+    session.world.spawn_failures = 3
+    with pytest.raises(RuntimeError, match=r"lead actor 1 .*30\.0"):
+        director.spawn()

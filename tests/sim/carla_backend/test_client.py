@@ -98,3 +98,22 @@ def test_ports_from_env(monkeypatch):
     monkeypatch.setenv("CARLA_PORT", "3000")
     monkeypatch.setenv("CARLA_TM_PORT", "9000")
     assert (CarlaSimConfig().port, CarlaSimConfig().tm_port) == (3000, 9000)
+
+
+def test_load_world_runs_under_a_long_timeout_then_restores(fake_carla):
+    with carla_session(CarlaSimConfig(town="Town01", timeout=20.0)) as s:
+        assert s.client.timeouts == [20.0, 180.0, 20.0]
+
+
+def test_no_long_timeout_when_town_is_current(fake_carla):
+    fake_carla.set_current_map("Carla/Maps/Town01")
+    with carla_session(CarlaSimConfig(town="Town01")) as s:
+        assert s.client.timeouts == [20.0]
+
+
+def test_parked_vehicles_layer_unloaded_only_for_opt_maps(fake_carla):
+    with carla_session(CarlaSimConfig(town="Town03_Opt")) as s:
+        assert s.world.unloaded_layers == [fake_carla.MapLayer.ParkedVehicles]
+    fake_carla.reset()
+    with carla_session(CarlaSimConfig(town="Town01")) as s:
+        assert not hasattr(s.world, "unloaded_layers")

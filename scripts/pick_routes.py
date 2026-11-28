@@ -15,21 +15,21 @@ from pathlib import Path
 import yaml
 
 from hybrid_av.sim.carla_backend.client import CarlaSimConfig, connect
+from hybrid_av.sim.carla_backend.scenario_setup import trace_waypoints
 
 LENGTH_M = (300.0, 800.0)
 MIN_SEPARATION_M = 50.0
 MAX_ATTEMPTS = 400  # (start, goal) pairs tried per town
 
 
-def _route_length(trace) -> float:
-    locs = [w.transform.location for w, _ in trace]
+def _route_length(wps) -> float:
+    locs = [w.transform.location for w in wps]
     return sum(math.dist((a.x, a.y, a.z), (b.x, b.y, b.z)) for a, b in itertools.pairwise(locs))
 
 
 def town_routes(town: str, seed: int):
     """Yield accepted routes for one town, stopping after MAX_ATTEMPTS pairs."""
     from agents.navigation.global_route_planner import GlobalRoutePlanner
-    from agents.navigation.local_planner import RoadOption
 
     _, world = connect(CarlaSimConfig(town=town))
     wmap = world.get_map()
@@ -41,10 +41,16 @@ def town_routes(town: str, seed: int):
         s, g = pts[k % n], pts[(k % n + 1 + k // n) % n]
         if math.dist((s.location.x, s.location.y), (g.location.x, g.location.y)) < MIN_SEPARATION_M:
             continue
-        trace = planner.trace_route(s.location, g.location)
-        if any(o in (RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT) for _, o in trace):
+        try:  # the simulator's own checks: lane change, backward waypoints, start snap
+            wps = trace_waypoints(
+                wmap,
+                [s.location.x, s.location.y, s.location.z, s.rotation.yaw],
+                [g.location.x, g.location.y, g.location.z],
+                planner=planner,
+            )
+        except ValueError:
             continue
-        length = _route_length(trace)
+        length = _route_length(wps)
         if LENGTH_M[0] <= length <= LENGTH_M[1]:
             r = lambda *v: [round(float(x), 2) for x in v]
             yield {

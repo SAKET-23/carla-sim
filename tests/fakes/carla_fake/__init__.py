@@ -126,6 +126,11 @@ class LaneType(Enum):
     Any = -2
 
 
+class MapLayer(Enum):
+    ParkedVehicles = 16
+    All = 255
+
+
 class TrafficLightState(Enum):
     Red = 0
     Yellow = 1
@@ -487,7 +492,20 @@ class FakeWorld:
         self.actors[actor.id] = actor
         return actor
 
-    try_spawn_actor = spawn_actor
+    spawn_failures = (
+        0  # test hook: the next n try_spawn_actor calls return None (collision at the spawn pose)
+    )
+    try_spawn_poses: list  # every try_spawn_actor transform, in order
+
+    def try_spawn_actor(self, blueprint, transform, attach_to=None):
+        self.__dict__.setdefault("try_spawn_poses", []).append(transform)
+        if self.spawn_failures > 0:
+            self.spawn_failures -= 1
+            return None
+        return self.spawn_actor(blueprint, transform, attach_to)
+
+    def unload_map_layer(self, layer):
+        self.__dict__.setdefault("unloaded_layers", []).append(layer)
 
     def get_actor(self, actor_id):
         return self.actors.get(actor_id)
@@ -519,6 +537,7 @@ class Client:
 
     def set_timeout(self, seconds):
         self.timeout = seconds
+        self.timeouts = [*getattr(self, "timeouts", []), seconds]
 
     def get_world(self):
         return last_world

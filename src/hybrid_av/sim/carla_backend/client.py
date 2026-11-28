@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+_LOAD_WORLD_TIMEOUT = 180.0  # s
+
 
 @dataclass(frozen=True, slots=True)
 class CarlaSimConfig:
@@ -43,7 +45,16 @@ def connect(cfg: CarlaSimConfig):
     world = client.get_world()
     # ECC-02: map names look like "Carla/Maps/Town03_Opt"; load_world resets settings, so apply_sync runs after it
     if not world.get_map().name.endswith(cfg.town):
-        world = client.load_world(cfg.town)
+        client.set_timeout(
+            max(cfg.timeout, _LOAD_WORLD_TIMEOUT)
+        )  # the first load of another town can take minutes
+        try:
+            world = client.load_world(cfg.town)
+        finally:
+            client.set_timeout(cfg.timeout)
+    if world.get_map().name.endswith("_Opt"):
+        # LiteSim has no map-parked cars; unload the _Opt maps' ParkedVehicles layer so the scene matches
+        world.unload_map_layer(carla.MapLayer.ParkedVehicles)
     return client, world
 
 

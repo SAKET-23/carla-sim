@@ -4,6 +4,7 @@
 """
 
 import math
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
@@ -223,6 +224,7 @@ class ActorDirector:
         self._spawned: dict[int, object] = {}  # ObjectState id -> carla actor
         self._t = 0.0
         self._lead_speed: dict[int, float] = {}
+        self.skipped: list[int] = []  # parked / pedestrian ids that failed to spawn
 
     def _place(self, o):
         import carla
@@ -236,10 +238,23 @@ class ActorDirector:
         return transform
 
     def _spawn_one(self, o, cls, try_only=False):
+        import carla
+
         bp_lib = self.world.get_blueprint_library()
         transform = self._place(o)
         bp = bp_lib.find(_BLUEPRINT.get(cls, _BLUEPRINT[ObjectClass.CAR]))
-        actor = (self.world.try_spawn_actor if try_only else self.world.spawn_actor)(bp, transform)
+        if try_only:
+            actor = self.world.try_spawn_actor(bp, transform)
+        else:
+            # curb / map geometry can collide at the road edge: retry with the actor lifted 0, 0.5 and 1 m
+            for lift in (0.0, 0.5, 1.0):
+                lifted = carla.Transform(
+                    carla.Location(transform.location.x, transform.location.y, transform.location.z + lift),
+                    transform.rotation,
+                )
+                actor = self.world.try_spawn_actor(bp, lifted)
+                if actor is not None:
+                    break
         if actor is not None:
             self.actors.append(actor)
             self._spawned[o.id] = actor
@@ -252,6 +267,15 @@ class ActorDirector:
             if a is None:
                 continue
             actor = self._spawn_one(o, a.cls)
+            if actor is None:
+                loc = self._place(o).location
+                if a.kind == "lead":
+                    raise RuntimeError(
+                        f"lead actor {a.id} did not spawn at ({loc.x:.1f}, {loc.y:.1f}, {loc.z:.1f})"
+                    )
+                warnings.warn(f"{a.kind} actor {a.id} skipped: spawn collided", stacklevel=2)
+                self.skipped.append(a.id)
+                continue
             if a.kind == "lead":
                 vehicle = actor
                 vehicle.set_autopilot(True, self.tm.get_port())
