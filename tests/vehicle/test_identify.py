@@ -14,6 +14,7 @@ from hybrid_av.vehicle.identify import (
     fit_lateral,
     fit_longitudinal,
     friction_scale_for,
+    invalid_reason,
     lateral_problems,
     long_run_arrays,
     longitudinal_problems,
@@ -150,3 +151,18 @@ def test_steady_gain_error_uses_measured_speed():
     n = 100
     seg = Segment(np.arange(n) * 0.05, np.full(n, v), np.zeros(n), np.full(n, 0.05 * gain), np.full(n, 0.05))
     assert steady_gain_error(seg, p, K) == pytest.approx(0.0, abs=1e-9)
+
+
+def _flat(v, n=100, collided=False):
+    z = np.zeros(n)
+    return Segment(np.arange(n) * 0.05, np.full(n, v), z, z, z, collided)
+
+
+def test_invalid_reason_flags_collided_and_slow_segments():
+    assert invalid_reason(_flat(16.0), 16.0) is None
+    assert invalid_reason(_flat(14.0), 16.0) is None  # 0.875 x target
+    assert "collided" in invalid_reason(_flat(16.0, collided=True), 16.0)
+    assert "final speed" in invalid_reason(_flat(0.0), 16.0)
+    seg = _flat(16.0)
+    seg.vx[-20:] = 9.7  # slid: only the final window counts
+    assert "final speed" in invalid_reason(seg, 16.0)

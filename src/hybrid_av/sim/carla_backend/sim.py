@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from hybrid_av.geometry import unwrap_near
+from hybrid_av.geometry import unwrap_near, wrap_angle
 from hybrid_av.planning.route import Route
 from hybrid_av.sim.base import Scenario, StepInfo
 from hybrid_av.sim.carla_backend import convert
@@ -135,7 +135,9 @@ class CarlaSim:
             sc = dataclasses.replace(sc, time_limit=self._route.length / (0.5 * lim) + _TIME_SLACK)
             self._sc = sc
         self._wp_s = chord_s(wps)
-        self._pitch = np.radians([wp.transform.rotation.pitch for wp in wps])
+        self._pitch = wrap_angle(
+            np.radians([wp.transform.rotation.pitch for wp in wps])
+        )  # CARLA reports 0..360, flat = ~360
         entry = [i for i, wp in enumerate(wps) if wp.is_junction and (i == 0 or not wps[i - 1].is_junction)]
         self._junctions = [float(self._wp_s[i]) for i in entry]
 

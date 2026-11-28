@@ -30,6 +30,7 @@ from hybrid_av.vehicle.identify import (
     fit_coastdown,
     fit_lateral,
     fit_longitudinal,
+    invalid_reason,
     lateral_problems,
     long_run_arrays,
     longitudinal_problems,
@@ -44,6 +45,7 @@ FIXTURE = Path(__file__).resolve().parents[1] / "tests/integration/fixtures/town
 KP, KI = 1.0, 0.3  # speed-hold PI, m/s^2 per m/s and per m (the throttle comes from the LongitudinalMap)
 STEP_SPEEDS, STEP_DELTAS = (8.0, 12.0, 16.0), (0.03, -0.03, 0.06, -0.06, 0.1, -0.1)
 HOLD_OUT = 16.0  # m/s step segments kept out of the fit
+MIN_HELD_OUT = 3  # valid held-out segments needed for a verdict
 SWEEP_CHUNKS, SWEEP_T, SWEEP_F = (
     3,
     12.0,
@@ -54,7 +56,7 @@ SWEEP_CHUNKS, SWEEP_T, SWEEP_F = (
 def drive(sim, rc, v0, seconds, delta_of_t, v_ref, params, lm) -> Segment:
     """Reset at v0 and hold v_ref with a PI on throttle while steering delta_of_t(t); records the lateral states."""
     obs = sim.reset(plain_scenario(rc, v0))
-    rows, i_err = [], 0.0
+    rows, i_err, collided = [], 0.0, False
     for k in range(round(seconds / sim.dt)):
         e = obs.ego
         delta = delta_of_t(k * sim.dt)
@@ -62,10 +64,13 @@ def drive(sim, rc, v0, seconds, delta_of_t, v_ref, params, lm) -> Segment:
         cmd = control_to_actuator(Control(delta, KP * (v_ref - e.vx) + KI * i_err), e.vx, params, lm)
         rows.append((e.t, e.vx, e.vy, e.r, delta))
         obs, info = sim.step(cmd)
+        if info.collision != "none":
+            collided = True
+            break
         if info.route_completed:
             break
     a = np.array(rows)
-    return Segment(a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4])
+    return Segment(a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], collided)
 
 
 def chirp(f0, f1, T):
@@ -104,6 +109,16 @@ def steering_rate(sim, rc) -> float:
     return float(np.max(np.abs(np.diff(angles))) / sim.dt)
 
 
+def _save(runs: Path, segments, summary: dict) -> None:
+    (runs / "identify.json").write_text(json.dumps(summary, indent=2))
+    np.savez(
+        runs / "segments.npz",
+        **{
+            f"{i}_{k}": getattr(s, k) for i, s in enumerate(segments) for k in ("t", "vx", "vy", "r", "delta")
+        },
+    )
+
+
 def lateral(sim, rc, out: Path, runs: Path) -> None:
     sim.reset(plain_scenario(rc, 0.0))  # spawns the ego the API values are read from
     params = read_api(sim)
@@ -124,8 +139,22 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
         drive(sim, rc, 12.0, SWEEP_T + 1.0, chirp(f[i], f[i + 1], SWEEP_T), 12.0, params, lm)
         for i in range(SWEEP_CHUNKS)
     ]
-    train = [s for (v, _), s in steps.items() if v != HOLD_OUT] + sweeps
-    held = [s for (v, _), s in steps.items() if v == HOLD_OUT]
+    labelled = [(s, v, f"step v={v:g} delta={d:+g}") for (v, d), s in steps.items()] + [
+        (s, 12.0, f"sweep {i}") for i, s in enumerate(sweeps)
+    ]
+    train, held, dropped = [], [], []
+    for s, v, name in labelled:
+        why = invalid_reason(s, v)
+        if why:
+            dropped.append(f"{name}: {why}")
+        elif name.startswith("step") and v == HOLD_OUT:
+            held.append(s)
+        else:
+            train.append(s)
+    print(f"excluded {len(dropped)} invalid segments" + "".join(f"\n  {m}" for m in dropped))
+    if len(held) < MIN_HELD_OUT:
+        _save(runs, train + held, {"pass": False, "excluded": dropped})
+        raise SystemExit(f"only {len(held)} valid held-out segments (< {MIN_HELD_OUT}); {out} NOT written")
     fit, info = fit_lateral(train, params)
     val = evaluate_lateral(fit, held)
     K = understeer_gradient(fit)
@@ -142,17 +171,16 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
         out.write_text(yaml.safe_dump(dataclasses.asdict(fit)))
     else:
         print(f"{out} NOT written")
-    (runs / "identify.json").write_text(
-        json.dumps(
-            {"fit": info, "held_out": val, "gain_err": gains, "steer_rate": rate, "pass": bool(ok)}, indent=2
-        )
-    )
-    np.savez(
-        runs / "segments.npz",
-        **{
-            f"{i}_{k}": getattr(s, k)
-            for i, s in enumerate(train + held)
-            for k in ("t", "vx", "vy", "r", "delta")
+    _save(
+        runs,
+        train + held,
+        {
+            "fit": info,
+            "held_out": val,
+            "gain_err": gains,
+            "steer_rate": rate,
+            "pass": bool(ok),
+            "excluded": dropped,
         },
     )
     if not ok:

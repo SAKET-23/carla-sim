@@ -23,6 +23,7 @@ class Segment:
     vy: np.ndarray
     r: np.ndarray
     delta: np.ndarray
+    collided: bool = False
 
 
 @dataclass
@@ -170,6 +171,19 @@ def lateral_problems(val: dict, gains: list[float], K: float) -> list[str]:
         (K > 0, f"understeer K {K:.5f} <= 0 (check ECC-12)"),
     ]
     return [msg for ok, msg in checks if not ok]
+
+
+def invalid_reason(
+    seg: Segment, v_target: float, window: int = 20, min_speed_frac: float = 0.85
+) -> str | None:
+    """Why a segment must not enter the fit or the held-out set (None when valid): it hit something, or ended
+    (mean of the last `window` samples) below `min_speed_frac` x the target speed (stalled, slid or braked off)."""
+    if seg.collided:
+        return "collided"
+    v = float(np.mean(seg.vx[-window:]))
+    if v < min_speed_frac * v_target:
+        return f"final speed {v:.1f} < {min_speed_frac} x {v_target:g} m/s"
+    return None
 
 
 def steady_gain_error(seg: Segment, p: VehicleParams, K: float, window: int = 20) -> float:

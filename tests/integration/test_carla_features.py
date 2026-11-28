@@ -36,6 +36,7 @@ def test_features_match_independent_truth(make_sim):
     stack.reset(sim.route())
     errors = {k: [] for k in (0, 1, 2, 3, 4, 9, 10, 19, 21, 22, 23)}
     clipped = np.zeros(len(FEATURES))
+    seen_min, seen_max = np.full(len(FEATURES), np.inf), np.full(len(FEATURES), -np.inf)
     steps = 0
     for _ in range(1200):  # 60 s
         feats = stack.features(obs)
@@ -89,6 +90,7 @@ def test_features_match_independent_truth(make_sim):
         lo = np.array([f.lo for f in FEATURES])
         hi = np.array([f.hi for f in FEATURES])
         clipped += (raw < lo) | (raw > hi)
+        seen_min, seen_max = np.minimum(seen_min, raw), np.maximum(seen_max, raw)
         steps += 1
         out = stack.act(obs, ConstantAction()(feats.z, feats), feats)
         obs, info = sim.step(out.command)
@@ -102,5 +104,8 @@ def test_features_match_independent_truth(make_sim):
             )
     saturated = {FEATURES[i].name: round(c / steps, 3) for i, c in enumerate(clipped) if c / steps > 0.01}
     print(f"slots that clip on > 1 % of steps: {saturated}")
+    for i, f in enumerate(FEATURES):
+        if f.name in saturated:
+            print(f"  {f.name}: observed [{seen_min[i]:.3f}, {seen_max[i]:.3f}] vs range [{f.lo}, {f.hi}]")
     assert not saturated, "slots outside [lo, hi] on more than 1 % of steps"
     # shortcut: slot 16 (crossing conflict distance) and slot 23 outside light stops are not recomputed independently

@@ -54,13 +54,24 @@ def test_red_light(make_sim, points, colour):
     sim = make_sim()
     rc, _, _ = signalised_route(connect(CarlaSimConfig(town="Town03_Opt"))[1], points)
     obs = sim.reset(plain_scenario(rc, 6.0))
+    assert sim._lights, (
+        "no traffic light was matched to the route (route_lights found none): the test is vacuous"
+    )
+    print(
+        f"{colour}: route {sim.route().length:.1f} m, light stop_s {[round(lo.stop_s, 1) for lo in sim._lights]}"
+    )
     for lo in sim._lights:  # every light on the route is held in the chosen colour
         lo.light.set_state(carla.TrafficLightState.Red if colour == "red" else carla.TrafficLightState.Green)
         lo.light.freeze(True)
     drv, violations = Driver(sim, 6.0), 0
-    for _ in range(500):
+    for k in range(500):
         obs, info = drv.step(obs)
         violations += info.red_light_violation
+        if k % 20 == 0 or info.red_light_violation:  # diagnostics: light seen, gap to the line, progress
+            c = obs.context
+            print(f"k={k} s={info.route_s:.1f} vx={obs.ego.vx:.1f} light={c.light_state.name} "
+                  f"d_line={c.dist_to_stop_line:.1f} viol={info.red_light_violation} "
+                  f"state={[lo.light.get_state().name for lo in sim._lights]}")  # fmt: skip
         if info.route_completed:
             break
     assert violations == (1 if colour == "red" else 0)

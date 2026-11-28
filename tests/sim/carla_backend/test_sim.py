@@ -279,3 +279,20 @@ def test_time_limit_recomputed_for_carla_route(fake_carla):
     assert sim._sc.time_limit == pytest.approx(r.length / (0.5 * float(np.median(r.speed_limit))) + 30.0)
     sim.reset(straight_nominal(length=400.0, time_limit=5.0))
     assert sim._sc.time_limit == 5.0
+
+
+def test_road_grade_wraps_carla_pitch_to_signed_angle(fake_carla):
+    import carla
+
+    trace = fake_carla.straight_trace(n=101)
+    for (
+        wp,
+        _,
+    ) in trace:  # CARLA reports a flat road's pitch as ~360 (0..360 convention), a 0.1 rad slope as 354.3
+        wp.transform.rotation = carla.Rotation(pitch=359.99)
+    fake_carla.planner_trace = trace
+    sim = _sim()
+    assert sim.reset(straight_nominal()).context.road_grade == pytest.approx(0.0, abs=1e-3)
+    for wp, _ in trace:
+        wp.transform.rotation = carla.Rotation(pitch=360.0 - 5.7296)
+    assert sim.reset(straight_nominal()).context.road_grade == pytest.approx(-0.1, abs=1e-3)
