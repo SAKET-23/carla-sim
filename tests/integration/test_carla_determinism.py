@@ -26,7 +26,8 @@ def test_repeatability(make_sim):
         sc = carla_scenario(make_scenario("nominal", 0), "nominal", 0, None, ROUTES)
     except LookupError:
         pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
-    sc = dataclasses.replace(sc, time_limit=60.0)  # the first 60 s
+    # the first 60 s; time_from_route=False so CarlaSim._reset keeps it
+    sc = dataclasses.replace(sc, time_limit=60.0, carla_route={**sc.carla_route, "time_from_route": False})
     runs = []
     for _ in range(2):
         sim = make_sim(sensors=None, town=sc.carla_route["town"], seed=0)

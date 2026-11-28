@@ -15,7 +15,7 @@ from pathlib import Path
 import yaml
 
 from hybrid_av.sim.carla_backend.client import CarlaSimConfig, connect
-from hybrid_av.sim.carla_backend.scenario_setup import trace_waypoints
+from hybrid_av.sim.carla_backend.scenario_setup import ROUTE_RESOLUTION, trace_waypoints
 
 LENGTH_M = (300.0, 800.0)
 MIN_SEPARATION_M = 50.0
@@ -35,7 +35,7 @@ def town_routes(town: str, seed: int):
     wmap = world.get_map()
     pts = list(wmap.get_spawn_points())
     random.Random(seed).shuffle(pts)
-    planner = GlobalRoutePlanner(wmap, 2.0)
+    planner = GlobalRoutePlanner(wmap, ROUTE_RESOLUTION)
     n = len(pts)
     for k in range(min(MAX_ATTEMPTS, n * (n - 1))):
         s, g = pts[k % n], pts[(k % n + 1 + k // n) % n]

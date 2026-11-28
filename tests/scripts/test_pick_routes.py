@@ -73,3 +73,16 @@ def test_start_far_from_first_waypoint_rejected_like_the_simulator(fake_carla, t
     ]  # 400 m long, no lane change, but 480+ m from every spawn point
     rc, doc = _run(tmp_path, "Town01", 1)
     assert rc != 0 and doc["routes"] == []
+
+
+def test_planner_built_at_the_simulators_resolution(fake_carla, tmp_path, monkeypatch):
+    from hybrid_av.sim.carla_backend.scenario_setup import ROUTE_RESOLUTION
+    from tests.fakes.carla_fake.agents.navigation import global_route_planner as grp
+
+    seen = []
+    init = grp.GlobalRoutePlanner.__init__
+    monkeypatch.setattr(
+        grp.GlobalRoutePlanner, "__init__", lambda self, w, res: (seen.append(res), init(self, w, res))[1]
+    )
+    _run(tmp_path, "Town01", 1)
+    assert seen and set(seen) == {ROUTE_RESOLUTION}

@@ -41,7 +41,12 @@ class FrictionNotApplied(RuntimeError):
 # --- route ----------------------------------------------------------------------------------------------------
 
 
-def trace_waypoints(world_map, start, goal, resolution: float = 1.0, planner=None) -> list:
+ROUTE_RESOLUTION = (
+    1.0  # planner sampling (m) the simulator uses; scripts/pick_routes.py must validate with the same
+)
+
+
+def trace_waypoints(world_map, start, goal, resolution: float = ROUTE_RESOLUTION, planner=None) -> list:
     """GlobalRoutePlanner waypoints from start [x, y, z, yaw] to goal [x, y, z] (CARLA coordinates)."""
     import carla
 
