@@ -177,7 +177,8 @@ def test_unmatched_route_light_gets_default_group_timings(fake_carla):
 
 def test_unmatched_route_light_uses_first_light_cycle(fake_carla):
     world = fake_carla.last_world
-    near, far = _tl(world, 30.0), _tl(world, 60.0)
+    _tl(world, 30.0)
+    far = _tl(world, 60.0)
     ctl = TrafficControl("light", 30.0, cycle=(8.0, 2.0, 6.0))
     _sim().reset(straight_nominal(controls=(ctl,)))
     assert (far.green, far.yellow) == (8.0, 2.0)
