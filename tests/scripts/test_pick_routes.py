@@ -86,3 +86,20 @@ def test_planner_built_at_the_simulators_resolution(fake_carla, tmp_path, monkey
     )
     _run(tmp_path, "Town01", 1)
     assert seen and set(seen) == {ROUTE_RESOLUTION}
+
+
+def _light_at(monkeypatch, stop_s):
+    from hybrid_av.sim.carla_backend.scenario_setup import LightOnRoute
+
+    monkeypatch.setattr(pick, "route_lights", lambda world, wps: [LightOnRoute(object(), stop_s)])
+
+
+def test_stop_line_near_start_rejected(fake_carla, tmp_path, monkeypatch):
+    _light_at(monkeypatch, pick.MIN_FIRST_STOP_M - 1.0)
+    rc, doc = _run(tmp_path, "Town01", 1)
+    assert rc != 0 and doc["routes"] == []
+
+
+def test_stop_line_beyond_min_first_stop_accepted(fake_carla, tmp_path, monkeypatch):
+    _light_at(monkeypatch, pick.MIN_FIRST_STOP_M + 1.0)
+    assert _run(tmp_path, "Town01", 1)[0] == 0

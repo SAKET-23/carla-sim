@@ -62,6 +62,23 @@ def _ttc_min(feats, vx: float) -> float:
     return ttc
 
 
+_DIAG_RANGE = 40.0  # m, nearest-object diagnostic columns (G2 s16 route 8: what the MPC dodged at a junction)
+
+
+def _nearest_object(obs, rng: float) -> dict:
+    """Nearest object within `rng` of the ego, position and velocity in the ego frame (nan if none)."""
+    e = obs.ego
+    c, s = np.cos(e.psi), np.sin(e.psi)
+    best = min(obs.objects, key=lambda o: np.hypot(o.x - e.x, o.y - e.y), default=None)
+    if best is None or np.hypot(best.x - e.x, best.y - e.y) > rng:
+        return dict.fromkeys(("obj_dx", "obj_dy", "obj_vx", "obj_vy"), np.nan)
+    dx, dy = best.x - e.x, best.y - e.y
+    return {
+        "obj_dx": c * dx + s * dy, "obj_dy": -s * dx + c * dy,
+        "obj_vx": c * best.vx + s * best.vy, "obj_vy": -s * best.vx + c * best.vy,
+    }  # fmt: skip
+
+
 def run_episode(
     sim: Sim, scenario: Scenario, stack: AutonomyStack, source: ActionSource, record_activations=None
 ) -> EpisodeResult:
@@ -94,6 +111,7 @@ def run_episode(
             "slack_f": out.mpc.slack_friction_max, "slack_o": out.mpc.slack_obstacle_max,
             "ttc_min": _ttc_min(feats, ego.vx),
             "policy_step": is_policy,
+            **_nearest_object(obs, _DIAG_RANGE),
         }  # fmt: skip
         obs, info = sim.step(cmd)
         collision = info.collision != "none"

@@ -10,7 +10,7 @@ from hybrid_av.scenarios import make_scenario
 from hybrid_av.sim.base import ScriptedActor
 from hybrid_av.sim.litesim.sim import LiteSim
 from hybrid_av.stack import AutonomyStack
-from hybrid_av.types import ObjectClass
+from hybrid_av.types import ObjectClass, ObjectState
 from hybrid_av.vehicle.actuation import LongitudinalMap
 from hybrid_av.vehicle.params import VehicleParams
 
@@ -27,6 +27,27 @@ def test_run_episode_straight():
     ps = res.trace["policy_step"]
     assert ps[0] and not ps[1] and ps[2]
     assert np.isnan(res.trace["delta_meas"]).all() and "h1" not in res.trace
+    assert np.isnan(res.trace["obj_dx"]).all()  # no traffic: no nearest object
+
+
+def test_trace_logs_nearest_object_in_ego_frame():
+    sc = make_scenario("nominal", 50000, {"traffic": False})
+    obj = ObjectState(1, ObjectClass.CAR, 13.0, 4.0, 0.0, 0.0, 4.5, 2.0, 1.5, -3.0, 0.0)
+    sim = LiteSim(VehicleParams(), LongitudinalMap())
+    reset, step = sim.reset, sim.step
+    sim.reset = lambda s: dataclasses.replace(reset(s), objects=(obj,))
+
+    def step_with_obj(c):
+        o, i = step(c)
+        return dataclasses.replace(o, objects=(obj,)), i
+
+    sim.step = step_with_obj
+    tr = run_episode(sim, sc, _stack(), ConstantAction()).trace
+    e = np.array([tr["x"][0], tr["y"][0]])
+    c, s_ = np.cos(tr["psi"][0]), np.sin(tr["psi"][0])
+    d = np.array([13.0, 4.0]) - e
+    assert np.allclose([tr["obj_dx"][0], tr["obj_dy"][0]], [c * d[0] + s_ * d[1], -s_ * d[0] + c * d[1]])
+    assert np.isclose(tr["obj_vx"][0], -3.0 * c) and np.isclose(tr["obj_vy"][0], 3.0 * s_)
 
 
 def test_episode_ends_on_collision(monkeypatch):

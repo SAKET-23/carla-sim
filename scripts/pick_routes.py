@@ -15,10 +15,11 @@ from pathlib import Path
 import yaml
 
 from hybrid_av.sim.carla_backend.client import CarlaSimConfig, connect
-from hybrid_av.sim.carla_backend.scenario_setup import ROUTE_RESOLUTION, trace_waypoints
+from hybrid_av.sim.carla_backend.scenario_setup import ROUTE_RESOLUTION, route_lights, trace_waypoints
 
 LENGTH_M = (300.0, 800.0)
 MIN_SEPARATION_M = 50.0
+MIN_FIRST_STOP_M = 30.0  # a light's stop line nearer the start is an unavoidable red-light infraction
 MAX_ATTEMPTS = 400  # (start, goal) pairs tried per town
 
 
@@ -49,6 +50,9 @@ def town_routes(town: str, seed: int):
                 planner=planner,
             )
         except ValueError:
+            continue
+        # stop signs are scenario controls (random route positions), not CARLA map objects: nothing to check
+        if any(lo.stop_s < MIN_FIRST_STOP_M for lo in route_lights(world, wps)):
             continue
         length = _route_length(wps)
         if LENGTH_M[0] <= length <= LENGTH_M[1]:
