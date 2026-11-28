@@ -227,11 +227,39 @@ def test_no_sensor_rig_has_empty_sensor_data_but_still_collision_sensor(fake_car
     assert any(a.type_id == "sensor.other.collision" for a in fake_carla.last_world.actors.values())
 
 
-def test_reset_sets_ego_start_speed_along_heading(fake_carla):
+def test_reset_sets_ego_start_speed_along_heading(fake_carla, monkeypatch):
     sc = straight_nominal(ego_start_speed=5.0)
     sc.carla_route["start"] = [0.0, 0.0, 0.0, 90.0]  # CARLA yaw 90 deg: heading along world +y
+    _lane_centre_offset(fake_carla, monkeypatch, 0.0, 90.0)  # the snapped lane heading
     sim = CarlaSim(CarlaSimConfig(sensors=None))
     sim.reset(sc)
     v = sim.ego.target_velocity
     assert (v.x, v.y, v.z) == pytest.approx((0.0, 5.0, 0.0), abs=1e-9)
     sim.close()
+
+
+def _lane_centre_offset(fake_carla, monkeypatch, dy, yaw):
+    orig = fake_carla.Map.get_waypoint
+
+    def get_waypoint(self, loc, **kw):
+        wp = orig(self, loc, **kw)
+        if wp is not None:
+            wp.transform.location.y += dy
+            wp.transform.rotation.yaw = yaw
+        return wp
+
+    monkeypatch.setattr(fake_carla.Map, "get_waypoint", get_waypoint)
+
+
+def test_reset_snaps_ego_spawn_to_lane_centre(fake_carla, monkeypatch):
+    _lane_centre_offset(fake_carla, monkeypatch, 0.9, 3.0)
+    _sim().reset(straight_nominal())
+    t = fake_carla.ego.transform
+    assert (t.location.x, t.location.y, t.rotation.yaw) == (0.0, 0.9, 3.0)
+    assert t.location.z == pytest.approx(0.3)
+
+
+def test_reset_leaves_off_road_start_unsnapped(fake_carla, monkeypatch):
+    monkeypatch.setattr(fake_carla.Map, "drivable", False)
+    _sim().reset(straight_nominal())
+    assert fake_carla.ego.transform.location.y == pytest.approx(0.0)  # start as given (see straight_nominal)

@@ -105,17 +105,25 @@ def t_junctions(world, wmap) -> list[dict]:
 
 
 def straight(chains) -> list[float] | None:
-    best = None
+    """Start of the longest flat straight, followed with wp.next across segment boundaries (>= 200 m, else None)."""
+    best, best_len = None, 199.99
     for chain in chains:
-        xy, z = lib_xy(chain), [w.transform.location.z for w in chain]
-        yaw = np.array([w.transform.rotation.yaw for w in chain])
-        for i in range(len(chain)):
-            j = i
-            while j + 1 < len(chain) and abs(yaw[j + 1] - yaw[i]) < 1.0 and abs(z[j + 1] - z[i]) < 0.5:
-                j += 1
-            if np.hypot(*(xy[j] - xy[i])) >= 200.0 and (best is None or j - i > best[0]):
-                best = (j - i, xyzyaw(chain[i]))
-    return best[1] if best else None
+        start = chain[0]
+        t0, wp = start.transform, start
+        while wp.transform.location.distance(t0.location) < 400.0:
+            nxt = wp.next(STEP)
+            if not nxt:
+                break
+            wp = nxt[0]
+            t = wp.transform
+            if abs((t.rotation.yaw - t0.rotation.yaw + 180) % 360 - 180) > 1.0:
+                break
+            if abs(t.location.z - t0.location.z) > 0.5:
+                break
+            run = t.location.distance(t0.location)
+            if run > best_len:
+                best, best_len = start, run
+    return xyzyaw(best) if best else None
 
 
 def open_area(world, wmap, clearance: float = 35.0) -> list[float] | None:

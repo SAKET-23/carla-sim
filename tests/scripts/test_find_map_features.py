@@ -36,3 +36,19 @@ def test_curves_one_row_per_distinct_radius_and_start(fake_carla, monkeypatch):
     monkeypatch.setattr(fmf, "constant_radius_segments", lambda *a, **k: [(0.0, 50.0, 30.0)])
     rows = fmf.curves([fwd, fwd, other])
     assert [r["start"][0] for r in rows] == [0.0, 5.0]
+
+
+def test_straight_follows_next_across_segment_boundaries(fake_carla):
+    fmf = _load()
+
+    class Wp(fake_carla.Waypoint):
+        def next(self, d):
+            t = self.transform
+            if t.location.x >= 250.0:
+                return []
+            return [Wp(fake_carla.Transform(fake_carla.Location(t.location.x + d, 0.0, 0.0)))]
+
+    # segments are 100 m each; next() carries a start on across the boundaries
+    chains = [[Wp(fake_carla.Transform(fake_carla.Location(x, 0.0, 0.0)))] for x in (0.0, 100.0, 200.0)]
+    assert fmf.straight(chains) == [0.0, 0.0, 0.0, 0.0]
+    assert fmf.straight(chains[1:]) is None  # 150 m from x=100

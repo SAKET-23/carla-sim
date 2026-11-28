@@ -135,6 +135,15 @@ class CarlaSim:
 
         bp_lib = self.world.get_blueprint_library()
         x, y, z, yaw = rc["start"]
+        # a map spawn point sits up to ~1 m off the lane centre the planner route starts on; an off-road start
+        # (the friction circle in the open area) stays as given
+        if wmap.get_waypoint(
+            carla.Location(x, y, z), project_to_road=False, lane_type=carla.LaneType.Driving
+        ):
+            lane = wmap.get_waypoint(
+                carla.Location(x, y, z), project_to_road=True, lane_type=carla.LaneType.Driving
+            ).transform
+            x, y, z, yaw = lane.location.x, lane.location.y, lane.location.z, lane.rotation.yaw
         ego = self.world.spawn_actor(
             bp_lib.find(cfg.ego_blueprint),
             carla.Transform(carla.Location(x, y, z + _SPAWN_Z), carla.Rotation(yaw=yaw)),

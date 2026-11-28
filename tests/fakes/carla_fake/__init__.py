@@ -7,6 +7,7 @@ The conftest `fake_carla` fixture installs this package as `carla`. Test hooks: 
 import copy
 import fnmatch
 import itertools
+import math
 from enum import Enum
 
 from . import command  # noqa: F401  (carla.command)
@@ -33,7 +34,8 @@ class Vector3D(_Attrs):
 
 
 class Location(Vector3D):
-    pass
+    def distance(self, other):
+        return math.dist((self.x, self.y, self.z), (other.x, other.y, other.z))
 
 
 class Rotation(_Attrs):
