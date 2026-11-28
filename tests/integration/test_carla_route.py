@@ -12,7 +12,7 @@ from hybrid_av.stack import AutonomyStack
 from hybrid_av.types import TrafficLightState as Light
 from hybrid_av.vehicle.actuation import LongitudinalMap
 from hybrid_av.vehicle.params import VehicleParams
-from tests.integration.helpers import Driver, signalised_route, town03_pairs
+from tests.integration.helpers import Driver, route_gap, signalised_route, town03_pairs
 
 pytestmark = pytest.mark.carla
 
@@ -108,8 +108,7 @@ def test_traffic_context_lights(make_sim, points):
         if ctx.light_state != Light.NONE:
             assert ctx.dist_to_stop_line <= last + 1e-6, "dist_to_stop_line must not increase"
             last = ctx.dist_to_stop_line
-            tf = sim.ego.get_transform().location
-            geo = tf.distance(stop.transform.location) - sim._front
+            geo = route_gap(sim, sim.ego.get_transform().location, stop.transform.location)  # along the route
             assert abs(ctx.dist_to_stop_line - geo) < 1.0
         light = sim.ego.get_traffic_light()
         if light is not None:  # only inside the trigger volume

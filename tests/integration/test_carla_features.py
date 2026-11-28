@@ -16,7 +16,7 @@ from hybrid_av.stack import AutonomyStack
 from hybrid_av.types import TrafficLightState as Light
 from hybrid_av.vehicle.actuation import LongitudinalMap
 from hybrid_av.vehicle.params import VehicleParams
-from tests.integration.helpers import ROUTES
+from tests.integration.helpers import ROUTES, route_gap
 
 pytestmark = pytest.mark.carla
 _LIGHT = {"Red": Light.RED, "Yellow": Light.YELLOW, "Green": Light.GREEN}
@@ -34,7 +34,6 @@ def test_features_match_independent_truth(make_sim):
     p = VehicleParams(max_steer_wheel=sim.max_steer)
     stack = AutonomyStack(p, LongitudinalMap(), MPCConfig(), ReferenceConfig())
     stack.reset(sim.route())
-    lights = [a for a in sim.world.get_actors() if a.type_id.startswith("traffic.traffic_light")]
     errors = {k: [] for k in (0, 1, 2, 3, 4, 9, 10, 19, 21, 22, 23)}
     clipped = np.zeros(len(FEATURES))
     steps = 0
@@ -81,12 +80,12 @@ def test_features_match_independent_truth(make_sim):
                 rel = (lv.x * math.cos(psi) + (-lv.y) * math.sin(psi)) - raw[0]
                 errors[9].append(abs(raw[9] - best[0]) / 0.3)
                 errors[10].append(abs(raw[10] - rel) / 0.2)
-        if raw[19] in (float(Light.RED), float(Light.YELLOW)) and raw[23] < 60.0:
-            stops = [
-                s.transform.location.distance(tf.location) for lt in lights for s in lt.get_stop_waypoints()
-            ]
-            if stops:
-                errors[23].append(abs(raw[23] - (min(stops) - sim._front)) / 1.0)
+        if raw[19] in (float(Light.RED), float(Light.YELLOW)) and raw[23] < 60.0 and light is not None:
+            # distance along the route to the stop line ahead of this light (the feature's definition)
+            gaps = [route_gap(sim, tf.location, s.transform.location) for s in light.get_stop_waypoints()]
+            gaps = [g for g in gaps if g >= 0.0]
+            if gaps:
+                errors[23].append(abs(raw[23] - min(gaps)) / 1.0)
         lo = np.array([f.lo for f in FEATURES])
         hi = np.array([f.hi for f in FEATURES])
         clipped += (raw < lo) | (raw > hi)

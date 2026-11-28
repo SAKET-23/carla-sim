@@ -15,7 +15,7 @@ def test_versions(carla_server):
     """IC-01 — see Plan/06-integration/integration-check.md; likely fix: ECC-01."""
     import carla
 
-    client = carla.Client("localhost", 2000)
+    client = carla.Client("localhost", CarlaSimConfig().port)
     client.set_timeout(20.0)
     assert client.get_server_version() == client.get_client_version() == "0.9.16"
 
@@ -44,14 +44,14 @@ def test_sync_settings_applied(carla_server):
             times.append(snap.timestamp.elapsed_seconds)
         assert all(b - a == 1 for a, b in itertools.pairwise(frames))
         assert all(abs((b - a) - 0.05) < 1e-6 for a, b in itertools.pairwise(times))
-    assert not carla.Client("localhost", 2000).get_world().get_settings().synchronous_mode
+    assert not carla.Client("localhost", CarlaSimConfig().port).get_world().get_settings().synchronous_mode
 
 
 def test_close_restores_async_and_destroys_actors(make_sim, points):
     """IC-03 — see Plan/06-integration/integration-check.md; likely fix: ECC-03."""
     import carla
 
-    world = carla.Client("localhost", 2000).get_world()
+    world = carla.Client("localhost", CarlaSimConfig().port).get_world()
     before = len(world.get_actors())
     rc = straight_route(points, "Town03_Opt")
     for _ in range(2):  # a second reset() -> close() cycle leaves the actor count where it started

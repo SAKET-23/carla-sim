@@ -4,6 +4,7 @@ import dataclasses
 import math
 
 import pytest
+import yaml
 
 from hybrid_av.eval.driving_score import driving_score
 from hybrid_av.eval.runner import run_episode
@@ -11,6 +12,7 @@ from hybrid_av.mpc.controller import MPCConfig
 from hybrid_av.planning.reference import ReferenceConfig
 from hybrid_av.rl.expert import ConstantAction
 from hybrid_av.scenarios import make_scenario
+from hybrid_av.sim.carla_backend.client import CarlaSimConfig, connect
 from hybrid_av.sim.carla_backend.routes import carla_scenario, plain_scenario, straight_route
 from hybrid_av.stack import AutonomyStack
 from hybrid_av.types import ActuatorCommand
@@ -50,7 +52,7 @@ def test_red_light(make_sim, points, colour):
     import carla
 
     sim = make_sim()
-    rc, _, _ = signalised_route(carla.Client("localhost", 2000).get_world(), points)
+    rc, _, _ = signalised_route(connect(CarlaSimConfig(town="Town03_Opt"))[1], points)
     obs = sim.reset(plain_scenario(rc, 6.0))
     for lo in sim._lights:  # every light on the route is held in the chosen colour
         lo.light.set_state(carla.TrafficLightState.Red if colour == "red" else carla.TrafficLightState.Green)
@@ -122,11 +124,14 @@ def test_blocked_timeout(make_sim, points):
 
 def test_episode_result(make_sim):
     """IC-28 — see Plan/06-integration/integration-check.md."""
-    try:
-        sc = carla_scenario(make_scenario("nominal", 0), "nominal", 0, None, ROUTES)
-    except LookupError:
-        pytest.skip("no CARLA route for nominal: fill carla_routes.yaml (G2)")
-    sim = make_sim(sensors=None)
+    # this file's server is on Town03_Opt and a town switch aborts CARLA: use the first nominal route in that town
+    towns = [r["town"] for r in yaml.safe_load(ROUTES.read_text()).get("nominal", [])]
+    if "Town03_Opt" not in towns:
+        pytest.skip("no Town03_Opt route for nominal in carla_routes.yaml")
+    sc = carla_scenario(
+        make_scenario("nominal", 0), "nominal", 0, None, ROUTES, route_index=towns.index("Town03_Opt")
+    )
+    sim = make_sim(sensors=None, town="Town03_Opt")
     res = run_episode(
         sim,
         sc,

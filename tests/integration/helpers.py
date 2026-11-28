@@ -77,6 +77,16 @@ def town03_pairs(world, n: int = 5, seed: int = 0):
     raise RuntimeError(f"found only {len(out)} lane-change-free pairs")
 
 
+def route_gap(sim, ego_loc, stop_loc) -> float:
+    """Arc length along the planned route from the ego's front bumper to a stop waypoint (the feature's definition)."""
+    from hybrid_av.sim.carla_backend import convert
+
+    route = sim.route()
+    s_ego = route.project(*convert.loc_to_lib(ego_loc.x, ego_loc.y, 0.0)[:2]).s
+    s_stop = route.project(*convert.loc_to_lib(stop_loc.x, stop_loc.y, 0.0)[:2]).s
+    return s_stop - s_ego - sim._front
+
+
 def signalised_route(world, points):
     """carla_route from the fixture's signalised-junction start through that junction, and the light's stop waypoint."""
     import carla

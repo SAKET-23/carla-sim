@@ -72,3 +72,12 @@ def test_merge_gap_statistics():
     merged_gaps = np.diff(np.sort(np.concatenate([np.cumsum(g) for g in lanes])))
     big = merged_gaps > 5.0
     assert 90.0 <= merged_gaps.sum() / big.sum() <= 120.0
+
+
+def test_wet_curve_calibrated_tire_friction_scale():
+    from pathlib import Path
+
+    import yaml
+
+    k = yaml.safe_load(Path("configs/scenarios/wet_curve.yaml").read_text())["carla_tire_friction_scale"]
+    assert 0.0 < k < 1.0
