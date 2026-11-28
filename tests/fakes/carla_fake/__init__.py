@@ -418,6 +418,11 @@ def _default_datum(type_id):
     return make() if make else None
 
 
+class ActorList(list):
+    def filter(self, pattern):
+        return ActorList(a for a in self if fnmatch.fnmatch(a.type_id, pattern))
+
+
 class FakeWorld:
     def __init__(self):
         self.settings, self.frame, self.elapsed = WorldSettings(), 0, 0.0
@@ -486,7 +491,7 @@ class FakeWorld:
         return self.actors.get(actor_id)
 
     def get_actors(self):
-        return list(self.actors.values())
+        return ActorList(self.actors.values())
 
     def get_traffic_lights_in_junction(self, junction_id):
         return []

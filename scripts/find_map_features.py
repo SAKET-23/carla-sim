@@ -59,12 +59,16 @@ def lib_xy(chain) -> np.ndarray:
 
 
 def curves(chains) -> list[dict]:
-    out = []
+    out, seen = [], set()
     for chain in chains:
         if len(chain) < 12:
             continue
         route = RouteBuilder.from_waypoints(lib_xy(chain), 10.0, 3.5)
         for s0, s1, r in constant_radius_segments(route, 28.0, 35.0, min_length=20.0):
+            key = (round(r, 1), tuple(xyzyaw(chain[0])))
+            if key in seen:  # the opposite lane direction repeats the curve
+                continue
+            seen.add(key)
             out.append(
                 {
                     "R": round(r, 1),
@@ -144,7 +148,7 @@ def open_area(world, wmap, clearance: float = 35.0) -> list[float] | None:
 
 
 def signalised_junction(world) -> list[float] | None:
-    for light in world.get_traffic_lights():
+    for light in world.get_actors().filter("traffic.traffic_light*"):
         for stop in light.get_stop_waypoints():
             back = stop.previous(90.0)
             if back and not back[0].is_junction:
