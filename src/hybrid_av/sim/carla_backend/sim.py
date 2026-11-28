@@ -78,6 +78,10 @@ class CarlaSim:
         if stack is not None:
             stack.close()  # the session destroys our actors (sensors stopped first) and restores the server
 
+    def junction_intervals(self) -> list[tuple[float, float]]:
+        """(entry_s, exit_s) of each junction along the driven route, for the steady-state metric mask."""
+        return list(self._junction_intervals)
+
     def reset(self, scenario: Scenario) -> Observation:
         if scenario.carla_route is None:
             raise ValueError("CarlaSim needs scenario.carla_route")
@@ -140,6 +144,11 @@ class CarlaSim:
         )  # CARLA reports 0..360, flat = ~360
         entry = [i for i, wp in enumerate(wps) if wp.is_junction and (i == 0 or not wps[i - 1].is_junction)]
         self._junctions = [float(self._wp_s[i]) for i in entry]
+        # exit = first non-junction waypoint after the run (the route end if it ends inside one)
+        self._junction_intervals = []
+        for i in entry:
+            j = next((k for k in range(i, len(wps)) if not wps[k].is_junction), len(wps) - 1)
+            self._junction_intervals.append((float(self._wp_s[i]), float(self._wp_s[j])))
 
         bp_lib = self.world.get_blueprint_library()
         x, y, z, yaw = rc["start"]

@@ -82,3 +82,23 @@ def test_carla_backend_without_route_entry_falls_back_to_spawn_points(
     monkeypatch.setattr(sys, "argv", ["run_scenario.py", "--backend", "carla", "--out", str(tmp_path)])
     mod.main()
     assert "no route in carla_routes.yaml" in caplog.text
+
+
+def test_steady_state_metrics_use_the_carla_junction_intervals(fake_carla, tmp_path, monkeypatch):
+    mod = _load()
+    routes = tmp_path / "routes.yaml"
+    routes.write_text(
+        yaml.safe_dump({"nominal": {"town": "Town03_Opt", "start": [0, 0, 0, 0], "goal": [200, 0, 0]}})
+    )
+    monkeypatch.setattr(mod, "ROUTES", routes)
+    seen = []
+    monkeypatch.setattr(mod, "steady_state_metrics", lambda tr, sc, dt: seen.append(sc.junction_s) or {})
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["run_scenario.py", "--backend", "carla", "--town", "Town03_Opt", "--ticks", "2"]
+        + ["--mode", "A", "--out", str(tmp_path / "o")],
+    )
+    monkeypatch.setattr(mod.CarlaSim, "junction_intervals", lambda self: [(1.0, 2.0)], raising=False)
+    mod.main()
+    assert seen == [((1.0, 2.0),)]

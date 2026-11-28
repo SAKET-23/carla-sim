@@ -166,6 +166,19 @@ def test_context_junction_distance_from_route_waypoints(fake_carla):
     assert obs.context.dist_to_junction == pytest.approx(60.0 - 2.4, abs=1.0)
 
 
+def test_junction_intervals_from_route_waypoints(fake_carla):
+    trace = fake_carla.straight_trace(n=101)
+    for lo, hi in ((20, 30), (90, 101)):  # the second run reaches the route end
+        for wp, _ in trace[lo:hi]:
+            wp.is_junction = True
+    fake_carla.planner_trace = trace
+    sim = _sim()
+    sim.reset(straight_nominal())
+    (e1, x1), (e2, x2) = sim.junction_intervals()
+    assert (e1, x1) == pytest.approx((sim._wp_s[20], sim._wp_s[30]))
+    assert (e2, x2) == pytest.approx((sim._wp_s[90], sim._wp_s[100]))
+
+
 def test_friction_zone_applied_and_reported(fake_carla):
     sim = _sim(tire_friction_scale=0.3)
     sim.reset(straight_nominal(friction_zones=(FrictionZone(20.0, 40.0, 0.35),), base_mu=1.0))

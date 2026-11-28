@@ -153,6 +153,8 @@ def main() -> None:
     )
     np.savez(d / "trace.npz", **res.trace)
     meta = {k: v for k, v in dataclasses.asdict(res).items() if k != "trace"}
+    if a.backend == "carla":  # sc.junction_s describes the LiteSim route, not the CARLA one driven
+        sc = dataclasses.replace(sc, junction_s=tuple(sim.junction_intervals()))
     meta.update(steady_state_metrics(res.trace, sc, sim.dt))
     (d / "metrics.json").write_text(json.dumps(meta, indent=2))
     plot_episode(res, route, d / "episode.png")
