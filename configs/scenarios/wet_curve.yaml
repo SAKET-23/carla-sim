@@ -11,5 +11,5 @@ zone_lead: [10.0, 20.0]  # zone starts this far before the arc entry
 start_speed: [12.0, 14.0]
 roughness: [0.0, 0.3]
 time_slack: 30.0
-# pod-calibrated k* for mu 0.35 (repeats 3.46 m/s^2 +/-0 %)
-carla_tire_friction_scale: 0.1174
+# pod-calibrated k* for mu 0.35 with the calibrated vehicle (a_lat_max 3.34 m/s^2 ~ 0.34 g, repeats +/-0.1 %; wet 3.34 vs dry 9.04)
+carla_tire_friction_scale: 0.1127

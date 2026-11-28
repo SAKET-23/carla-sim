@@ -1,0 +1,27 @@
+# Identified on CARLA 0.9.16 (vehicle.tesla.model3) by scripts/identify_vehicle.py.
+# Lateral: held-out yaw-rate RMSE 0.0028 rad/s, gain error 3.0 %, understeer K 0.00046,
+# CARLA steering curve included.
+Cf: 110878.98144290985
+Cr: 74273.83848920933
+Iz: 2361.948813644312
+a: 1.1716834142111043
+b: 1.8328597026588243
+drag_coeff: 0.0004
+length: 4.791779518127441
+m: 1845.0
+max_accel: 11.118986330195849
+max_decel: 9.342246828445964
+max_steer: 0.7
+max_steer_wheel: 1.2217303432379762
+rolling: 0.15
+steer_curve_k:
+- 1.0
+- 0.8999999761581421
+- 0.800000011920929
+- 0.699999988079071
+steer_curve_v:
+- 0.0
+- 5.555555555555555
+- 16.666666666666668
+- 33.333333333333336
+width: 2.163450002670288
