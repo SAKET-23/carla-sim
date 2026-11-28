@@ -74,21 +74,7 @@ def test_lowpass_attenuates_noise_keeps_mean():
     assert np.std(y[50:]) < np.std(x[50:]) and np.mean(y[50:]) == pytest.approx(2.0, abs=0.3)
 
 
-def test_fit_longitudinal_and_coastdown_recover_map():
-    rng = np.random.default_rng(1)
-    p = VehicleParams()
-    vx = rng.uniform(3.0, 20.0, 400)
-    ax = rng.uniform(-3.0, 2.0, 400)
-    need = ax + p.rolling + p.drag_coeff * vx**2
-    throttle = np.where(need > 0, 0.12 + 0.30 * need, 0.0)
-    brake = np.where(need <= 0, 0.25 * -need, 0.0)
-    s = LongSamples(vx, ax, np.clip(throttle, 0, 1), np.clip(brake, 0, 1))
-    lm = fit_longitudinal(s, p)
-    assert isinstance(lm, LongitudinalMap)
-    assert lm.throttle_gain == pytest.approx(0.30, rel=0.05) and lm.throttle_bias == pytest.approx(
-        0.12, abs=0.03
-    )
-    assert lm.brake_gain == pytest.approx(0.25, rel=0.05)
+def test_coastdown_fit_recovers_rolling_and_drag():
     v = np.linspace(20, 6, 100)
     rolling, drag = fit_coastdown(v, -(0.2 + 0.0006 * v**2))
     assert rolling == pytest.approx(0.2, abs=1e-6) and drag == pytest.approx(0.0006, abs=1e-8)
@@ -122,18 +108,6 @@ def test_lowpass_empty_and_short_long_run_arrays_are_empty():
     assert len(lowpass(np.array([]), 0.05, 5.0)) == 0
     rows = np.ones((10, 4))  # 0.5 s < the 1.0 s discard window
     assert all(len(c) == 0 for c in long_run_arrays(rows, 0.05, skip=1.0))
-
-
-def test_fit_longitudinal_tolerates_empty_parts():
-    rng = np.random.default_rng(1)
-    vx, ax = rng.uniform(3.0, 20.0, 400), rng.uniform(-3.0, 2.0, 400)
-    p = VehicleParams()
-    need = ax + p.rolling + p.drag_coeff * vx**2
-    thr = np.clip(np.where(need > 0, 0.12 + 0.30 * need, 0.0), 0, 1)
-    brk = np.clip(np.where(need <= 0, 0.25 * -need, 0.0), 0, 1)
-    parts = [(vx, ax, thr, brk), tuple(np.empty(0) for _ in range(4))]
-    s = LongSamples(*(np.concatenate(c) for c in zip(*parts, strict=True)))
-    assert fit_longitudinal(s, p).throttle_gain == pytest.approx(0.30, rel=0.05)
 
 
 def test_longitudinal_problems_flags_each_garbage_value():
@@ -194,24 +168,58 @@ def test_invalid_reason_steady_state_applies_to_steps_only():
     assert invalid_reason(seg, 16.0, steady=False) is None  # sweeps are not steady by design
 
 
-def _nonlinear_samples(rng, n=3000):
-    vx = rng.uniform(0.5, 24.0, n)
-    thr = rng.integers(1, 11, n) / 10
-    # accel a function of throttle^2 and fading with speed: far from linear in throttle
-    drive = 6.0 * thr**2 * (1.0 - 0.8 * vx / 25.0)
-    p = VehicleParams()
-    ax = drive - p.rolling - p.drag_coeff * vx**2
-    return LongSamples(vx, ax, thr, np.zeros(n)), p
+def _plant_samples(lag=0.4, dt=0.05):
+    """Open-loop runs of a plant a(v, thr) = 6 thr (1 - v/30) - 0.38 v with a first-order drivetrain lag; the first
+    0.5 s of each run is dropped, as run_long does."""
+    parts = []
+
+    def run(v0, thr, brk, T):
+        v, drv, rows = v0, -0.38 * v0, []
+        for _ in range(round(T / dt)):
+            target = 6.0 * thr * (1 - v / 30.0) - 0.38 * v
+            drv += dt / lag * (target - drv)
+            ax = drv - 7.0 * brk
+            rows.append((v, ax, thr, brk))
+            v = max(v + ax * dt, 0.0)
+        return np.array(rows)[round(0.5 / dt) :]
+
+    for v0 in (0.0, 5.0, 10.0, 15.0):
+        for thr in np.arange(1, 11) / 10:
+            parts.append(run(v0, thr, 0.0, 4.0))
+    for v0 in (10.0, 20.0):
+        for b in np.arange(1, 11) / 10:
+            parts.append(run(v0, 0.0, b, 3.0))
+    parts.append(run(20.0, 0.0, 0.0, 15.0))
+    return LongSamples(*np.concatenate(parts).T), VehicleParams()
 
 
-def test_table_fit_recovers_nonlinear_map_where_linear_fails():
+def test_table_fit_recovers_plant_and_round_trips():
+    from hybrid_av.types import Control
+    from hybrid_av.vehicle.actuation import coast_accel, control_to_actuator
     from hybrid_av.vehicle.identify import throttle_r2
 
-    s, p = _nonlinear_samples(np.random.default_rng(2))
+    s, p = _plant_samples()
     lm = fit_longitudinal(s, p)
-    assert lm.table_speeds and throttle_r2(s, p, lm) >= 0.9
-    assert (
-        throttle_r2(s, p, LongitudinalMap(lm.throttle_gain, lm.throttle_bias, lm.brake_gain, lm.coast_band))
-        < 0.9
-    )
-    assert all(np.all(np.diff(row) >= 0) and row[0] == 0.0 for row in lm.table_accels)
+    assert throttle_r2(s, p, lm) >= 0.9 and longitudinal_problems(replace(p, max_decel=6.0), lm, 0.95) == []
+    assert lm.brake_gain == pytest.approx(1 / 7.0, rel=0.25)  # a0 is bin-averaged, which dilutes the slope
+    for v in (4.0, 8.0, 12.0, 16.0):
+        a0 = coast_accel(lm, v)
+        assert a0 == pytest.approx(-0.38 * v, abs=0.4)
+        for want in (
+            a0 + 0.3,
+            a0 + 1.0,
+            0.5 * (6.0 * (1 - v / 30.0) - 0.38 * v),
+        ):  # milder than coasting: throttle
+            c = control_to_actuator(Control(0.0, want), v, p, lm)
+            assert c.brake == 0.0
+            assert 6.0 * c.throttle * (1 - v / 30.0) - 0.38 * v == pytest.approx(want, abs=0.6)
+        c = control_to_actuator(Control(0.0, a0 - 3.0), v, p, lm)  # stronger: brake
+        assert c.throttle == 0.0 and -0.38 * v - 7.0 * c.brake == pytest.approx(a0 - 3.0, abs=0.8)
+
+
+def test_table_problems_flag_bad_tables():
+    p = replace(VehicleParams(), max_decel=6.0)
+    good = LongitudinalMap(0.3, 0.1, 0.2, 0.2, (5.0,), (0.0, 0.5, 1.0), ((-2.0, 0.0, 3.0),))
+    assert longitudinal_problems(p, good, 0.95) == []
+    for bad in ((-2.0, 3.0, 0.0), (1.0, 2.0, 3.0), (-2.0, np.nan, 3.0)):
+        assert len(longitudinal_problems(p, replace(good, table_accels=(bad,)), 0.95)) >= 1

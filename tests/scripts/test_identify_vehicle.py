@@ -57,4 +57,4 @@ def test_run_long_settles_past_reset_spike_and_keeps_short_runs(monkeypatch):
     sim = Sim()
     vx, ax, _t, brk = iv.run_long(sim, None, 10.0, 12.0, lambda e: (0.0, 1.0), lambda e: e.vx < 0.2)
     assert len(vx) > 0 and ax.max() < 50 and brk[0] == 1.0  # recorded from the open-loop start, no spike
-    assert sim.ticks > 30 and vx[0] == pytest.approx(10.0, abs=1.0)
+    assert sim.ticks > 30 and 0 < vx[0] < 10.0  # the first 0.5 s (drivetrain lag) is dropped

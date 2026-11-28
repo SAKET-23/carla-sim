@@ -16,8 +16,9 @@ class LongitudinalMap:
     throttle_bias: float = 0.10
     brake_gain: float = 0.20  # brake per m/s² of required decel
     coast_band: float = 0.2  # |ax| below this → no throttle, no brake
-    # Optional drive table (replaces the linear throttle law when set): table_accels[i][j] is the drive accel
-    # at table_speeds[i] m/s and table_throttles[j] (non-decreasing in j, starts at throttle 0 -> accel 0).
+    # Optional table (replaces the linear law, rolling/drag_coeff are then ignored): table_accels[i][j] is the NET
+    # accel at table_speeds[i] m/s and table_throttles[j] (non-decreasing in j; throttle 0 is the coast row, <= 0).
+    # With a table, brake supplies the decel beyond coasting and coast_band is the deadband below the coast accel.
     table_speeds: tuple[float, ...] = ()
     table_throttles: tuple[float, ...] = ()
     table_accels: tuple[tuple[float, ...], ...] = ()
@@ -27,11 +28,21 @@ class LongitudinalMap:
         return load_dataclass(cls, path)
 
 
+def _net_accels(lm: LongitudinalMap, vx: float) -> np.ndarray:
+    """Net accel per table throttle level at `vx` (interpolated across the speed nodes)."""
+    return np.array([np.interp(abs(vx), lm.table_speeds, col) for col in zip(*lm.table_accels, strict=True)])
+
+
+def coast_accel(lm: LongitudinalMap, vx: float) -> float:
+    """Net accel at throttle 0 and no brake at `vx` (table maps only)."""
+    return float(_net_accels(lm, vx)[0])
+
+
 def drive_throttle(lm: LongitudinalMap, vx: float, required: float) -> float:
-    """Throttle in [0, 1] producing `required` m/s² of drive accel at `vx` (table inverted, else the linear law)."""
+    """Throttle in [0, 1] for `required` m/s²: the table inverted at `vx` (required = desired net accel), else the
+    linear law (required = drive accel beyond the resistances)."""
     if lm.table_speeds:
-        thr = [np.interp(required, a, lm.table_throttles) for a in lm.table_accels]
-        return float(np.clip(np.interp(abs(vx), lm.table_speeds, thr), 0.0, 1.0))
+        return float(np.clip(np.interp(required, _net_accels(lm, vx), lm.table_throttles), 0.0, 1.0))
     return float(np.clip(lm.throttle_bias + lm.throttle_gain * required, 0.0, 1.0))
 
 
@@ -39,7 +50,13 @@ def control_to_actuator(u: Control, vx: float, p: VehicleParams, lm: Longitudina
     f = np.interp(abs(vx), p.steer_curve_v, p.steer_curve_k)  # CARLA reduces the wheel angle with speed
     steer = float(np.clip(-u.delta / (p.max_steer_wheel * f), -1.0, 1.0))  # CARLA: positive = right
     throttle = brake = 0.0
-    if abs(u.ax) >= lm.coast_band:
+    if lm.table_speeds:
+        a0 = coast_accel(lm, vx)
+        if u.ax >= a0 - lm.coast_band:
+            throttle = drive_throttle(lm, vx, u.ax)
+        else:
+            brake = float(np.clip(lm.brake_gain * (a0 - u.ax), 0.0, 1.0))
+    elif abs(u.ax) >= lm.coast_band:
         required = u.ax + p.rolling + p.drag_coeff * vx**2
         if required > 0:
             throttle = drive_throttle(lm, vx, required)

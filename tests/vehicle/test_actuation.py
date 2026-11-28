@@ -53,22 +53,26 @@ def test_steer_curve_loads_from_yaml(tmp_path):
 def _table_lm():
     thr = tuple(k / 10 for k in range(11))
     speeds = (2.0, 10.0, 20.0)
-    accels = tuple(tuple(6.0 * t**2 * (1 - 0.8 * v / 25.0) for t in thr) for v in speeds)
-    return LongitudinalMap(table_speeds=speeds, table_throttles=thr, table_accels=accels)
+    accels = tuple(tuple(6.0 * t**2 * (1 - 0.8 * v / 25.0) - 0.38 * v for t in thr) for v in speeds)
+    return LongitudinalMap(brake_gain=0.2, table_speeds=speeds, table_throttles=thr, table_accels=accels)
 
 
-def test_table_inverts_round_trip_and_linear_default_unchanged():
+def test_table_inverts_ignores_resistances_and_linear_default_unchanged():
     lm = _table_lm()
-    for vx in (2.0, 6.0, 10.0, 17.0):
+    for vx in (2.0, 10.0, 20.0):
         for t in (0.6, 0.8, 0.9):
-            f = np.interp(
-                vx, (2.0, 10.0, 20.0), [6.0 * t**2 * (1 - 0.8 * v / 25.0) for v in (2.0, 10.0, 20.0)]
-            )
-            ax = f - P.rolling - P.drag_coeff * vx**2
-            got = control_to_actuator(Control(0.0, ax), vx, P, lm).throttle
-            assert np.isclose(got, t, atol=0.05)
+            ax = 6.0 * t**2 * (1 - 0.8 * vx / 25.0) - 0.38 * vx
+            assert np.isclose(control_to_actuator(Control(0.0, ax), vx, P, lm).throttle, t, atol=0.02)
     assert control_to_actuator(Control(0.0, 99.0), 10.0, P, lm).throttle == 1.0
     assert np.isclose(control_to_actuator(Control(0.0, 2.0), 10.0, P, LM).throttle, 0.10 + 0.35 * 2.19)
+
+
+def test_table_brakes_below_coast_accel_and_coasts_inside_band():
+    lm = _table_lm()  # coast accel at 10 m/s is -3.8
+    c = control_to_actuator(Control(0.0, -3.9), 10.0, P, lm)
+    assert c.throttle == 0.0 and c.brake == 0.0
+    c = control_to_actuator(Control(0.0, -6.8), 10.0, P, lm)
+    assert c.throttle == 0.0 and np.isclose(c.brake, 0.2 * 3.0)
 
 
 def test_table_yaml_round_trip(tmp_path):

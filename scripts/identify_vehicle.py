@@ -3,7 +3,7 @@
 Lateral:       identify_vehicle.py --out configs/vehicle/carla_model3.yaml
 Longitudinal:  identify_vehicle.py --longitudinal --vehicle configs/vehicle/carla_model3.yaml \\
                    --out configs/vehicle/carla_model3_longitudinal.yaml
-`--longitudinal` writes the LongitudinalMap to --out and updates rolling, drag_coeff, max_accel and max_decel in --vehicle
+`--longitudinal` writes the LongitudinalMap to --out and updates max_accel and max_decel in --vehicle
 (VehicleParams YAML files take no extra sections). Needs a CARLA server and the fixture from find_map_features.py.
 """
 
@@ -28,7 +28,6 @@ from hybrid_av.vehicle.identify import (
     Segment,
     check_units,
     evaluate_lateral,
-    fit_coastdown,
     fit_lateral,
     fit_longitudinal,
     invalid_reason,
@@ -238,6 +237,9 @@ def hold_speed(sim, obs, v0, seconds=1.5, kp=0.3, ki=0.15):
     return obs
 
 
+LAG_SKIP = 0.5  # s of drivetrain lag dropped at the start of every open-loop phase
+
+
 def run_long(sim, rc, v0, seconds, cmd_of, stop=None):
     """(vx, ax low-passed at 5 Hz, throttle, brake) per tick for one run: hold v0, then record the open-loop command."""
     obs = hold_speed(sim, sim.reset(plain_scenario(rc, v0)), v0)
@@ -249,7 +251,7 @@ def run_long(sim, rc, v0, seconds, cmd_of, stop=None):
         obs, info = sim.step(ActuatorCommand(0.0, thr, brk))
         if info.route_completed or (stop and stop(obs.ego)):
             break
-    return long_run_arrays(np.array(rows), sim.dt)
+    return long_run_arrays(np.array(rows), sim.dt, skip=LAG_SKIP)
 
 
 def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
@@ -266,14 +268,13 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
         for b in levels
     ]
     coast = run_long(sim, rc, 20.0, 15.0, lambda e: (0.0, 0.0), lambda e: e.vx < 5.0)
-    parts.append(coast)  # also gives the coast band
+    parts.append(coast)  # the throttle-0 row of the table
     cv, ca = coast[0], coast[1]
     if len(cv) == 0:
-        raise SystemExit("coastdown run left no samples; cannot fit rolling/drag")
+        raise SystemExit("coastdown run left no samples; cannot build the throttle-0 row")
     short = sum(len(c[0]) == 0 for c in parts)
     print(f"dropped {short} of {len(parts)} runs as empty")
-    rolling, drag = fit_coastdown(cv[cv > 6.0], ca[cv > 6.0])
-    p = dataclasses.replace(p, rolling=rolling, drag_coeff=drag)
+    damp = -float(np.sum(ca * cv) / np.sum(cv * cv))  # descriptive: coast decel ~ damp * vx
     s = LongSamples(*(np.concatenate(c) for c in zip(*parts, strict=True)))
     lm = fit_longitudinal(s, p)
     r2 = throttle_r2(s, p, lm)
@@ -283,7 +284,7 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
         p, max_accel=float(np.percentile(s.ax[full], 90)), max_decel=float(np.mean(-s.ax[braking]))
     )
     print(
-        f"{lm}\nrolling {rolling:.4f} drag {drag:.6f} max_accel {p.max_accel:.2f} max_decel {p.max_decel:.2f} R2 {r2:.3f}"
+        f"{lm}\ncoast damping {damp:.3f} 1/s max_accel {p.max_accel:.2f} max_decel {p.max_decel:.2f} R2 {r2:.3f}"
     )
     problems = longitudinal_problems(p, lm, r2)
     if problems:
