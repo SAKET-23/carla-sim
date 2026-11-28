@@ -44,9 +44,11 @@ def left_turn(carla_server, points):
             rec["ay"].append(a[1])
             rec["gz"].append(g[2])
         rec["start"], rec["end"] = start, obs.ego
-        yield rec
     finally:
+        # closed before the tests run: a second live session in this process (make_sim) aborts in the Traffic
+        # Manager when both switch it to synchronous mode on the same port (seen on the pod, G2)
         sim.close()
+    return rec
 
 
 def test_left_turn_signs(left_turn):

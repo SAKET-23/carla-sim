@@ -149,7 +149,10 @@ class CarlaSim:
             lane = wmap.get_waypoint(
                 carla.Location(x, y, z), project_to_road=True, lane_type=carla.LaneType.Driving
             ).transform
-            x, y, z, yaw = lane.location.x, lane.location.y, lane.location.z, lane.rotation.yaw
+            x, y, z = lane.location.x, lane.location.y, lane.location.z
+            # yaw too only when the start already points along the lane (IC-05 spawns 30 deg off on purpose)
+            if abs((lane.rotation.yaw - yaw + 180.0) % 360.0 - 180.0) < 15.0:
+                yaw = lane.rotation.yaw
         ego = self.world.spawn_actor(
             bp_lib.find(cfg.ego_blueprint),
             carla.Transform(carla.Location(x, y, z + _SPAWN_Z), carla.Rotation(yaw=yaw)),
