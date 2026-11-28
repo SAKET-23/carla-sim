@@ -41,6 +41,37 @@ def test_carla_backend_runs_ticks_and_measures(fake_carla, tmp_path, monkeypatch
     assert fake_carla.last_world.frame >= 15  # 10 settle ticks + 5 steps
 
 
+def test_longitudinal_map_flag_loads_calibrated_map(fake_carla, tmp_path, monkeypatch):
+    mod = _load()
+    routes = tmp_path / "routes.yaml"
+    routes.write_text(
+        yaml.safe_dump({"nominal": {"town": "Town03_Opt", "start": [0, 0, 0, 0], "goal": [200, 0, 0]}})
+    )
+    monkeypatch.setattr(mod, "ROUTES", routes)
+    lm = tmp_path / "lm.yaml"
+    lm.write_text(
+        yaml.safe_dump({"throttle_gain": 0.5, "throttle_bias": 0.2, "brake_gain": 0.3, "coast_band": 0.4})
+    )
+    seen = []
+    real = mod.LongitudinalMap.from_yaml
+    monkeypatch.setattr(
+        mod.LongitudinalMap, "from_yaml", classmethod(lambda c, p: seen.append(real(p)) or seen[-1])
+    )
+    argv = [
+        "run_scenario.py",
+        "--backend",
+        "carla",
+        "--town",
+        "Town03_Opt",
+        "--ticks",
+        "2",
+        "--longitudinal-map",
+    ]
+    monkeypatch.setattr(sys, "argv", [*argv, str(lm), "--mode", "A", "--out", str(tmp_path / "o")])
+    mod.main()
+    assert seen and seen[0].throttle_gain == 0.5
+
+
 def test_carla_backend_without_route_entry_falls_back_to_spawn_points(
     fake_carla, tmp_path, monkeypatch, caplog
 ):

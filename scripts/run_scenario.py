@@ -88,6 +88,7 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=Path("runs"))
     ap.add_argument("--backend", choices=["litesim", "carla"], default="litesim")
     ap.add_argument("--vehicle", type=Path, help="VehicleParams YAML (default: the built-in defaults)")
+    ap.add_argument("--longitudinal-map", type=Path, help="LongitudinalMap YAML (default: the built-in map)")
     ap.add_argument("--town", help="CARLA town (overrides the scenario's)")
     ap.add_argument("--route-set", help="carla_routes.yaml set, e.g. town10hd (key <family>_<set>)")
     ap.add_argument("--route-index", type=int, help="route in the set (default: seed %% set size)")
@@ -111,7 +112,8 @@ def main() -> None:
     else:
         ap.error(f"unknown source {a.source!r}")
     params = VehicleParams.from_yaml(a.vehicle) if a.vehicle else VehicleParams()
-    lm, mpc, ref = LongitudinalMap(), MPCConfig(), ReferenceConfig()
+    lm = LongitudinalMap.from_yaml(a.longitudinal_map) if a.longitudinal_map else LongitudinalMap()
+    mpc, ref = MPCConfig(), ReferenceConfig()
     sc = make_scenario(a.family, a.seed)
     if a.backend == "carla":
         sc = carla_scenario(sc, a.family, a.seed, a.town, a.route_set, a.route_index)

@@ -30,7 +30,10 @@ from hybrid_av.vehicle.identify import (
     fit_coastdown,
     fit_lateral,
     fit_longitudinal,
-    lowpass,
+    lateral_problems,
+    long_run_arrays,
+    longitudinal_problems,
+    steady_gain_error,
     throttle_r2,
     understeer_gradient,
     wheelbase_split,
@@ -126,16 +129,19 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
     fit, info = fit_lateral(train, params)
     val = evaluate_lateral(fit, held)
     K = understeer_gradient(fit)
-    gains = [  # steady-state yaw-rate gain at 16 m/s, measured over the last second against v / (L + K v^2)
-        abs(np.mean(s.r[-20:]) / np.mean(s.delta[-20:]) / (HOLD_OUT / (fit.L + K * HOLD_OUT**2)) - 1.0)
-        for s in held
-    ]
-    ok = val["r_rmse"] < 0.02 and val["vy_rmse"] < 0.1 and max(gains) < 0.10 and K > 0
+    gains = [steady_gain_error(s, fit, K) for s in held]
+    problems = lateral_problems(val, gains, K)
+    ok = not problems
     print(
-        f"fit {info}\nheld-out {val}, gain error max {max(gains):.3f}, K {K:.5f}: {'PASS' if ok else 'FAIL (K <= 0: check ECC-12)'}"
+        f"fit {info}\nheld-out {val}, gain error max {max(gains):.3f}, K {K:.5f}: {'PASS' if ok else 'FAIL'}"
     )
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(yaml.safe_dump(dataclasses.asdict(fit)))
+    for msg in problems:
+        print(f"  failed: {msg}")
+    if ok:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(yaml.safe_dump(dataclasses.asdict(fit)))
+    else:
+        print(f"{out} NOT written")
     (runs / "identify.json").write_text(
         json.dumps(
             {"fit": info, "held_out": val, "gain_err": gains, "steer_rate": rate, "pass": bool(ok)}, indent=2
@@ -149,6 +155,8 @@ def lateral(sim, rc, out: Path, runs: Path) -> None:
             for k in ("t", "vx", "vy", "r", "delta")
         },
     )
+    if not ok:
+        raise SystemExit(1)
 
 
 def run_long(sim, rc, v0, seconds, cmd_of, stop=None):
@@ -162,8 +170,7 @@ def run_long(sim, rc, v0, seconds, cmd_of, stop=None):
         obs, info = sim.step(ActuatorCommand(0.0, thr, brk))
         if info.route_completed or (stop and stop(obs.ego)):
             break
-    a = np.array(rows)
-    return a[:, 0], lowpass(a[:, 1], sim.dt, 5.0), a[:, 2], a[:, 3]
+    return long_run_arrays(np.array(rows), sim.dt)
 
 
 def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
@@ -195,10 +202,13 @@ def longitudinal(sim, rc, vehicle: Path, out: Path, runs: Path) -> None:
     print(
         f"{lm}\nrolling {rolling:.4f} drag {drag:.6f} max_accel {p.max_accel:.2f} max_decel {p.max_decel:.2f} R2 {r2:.3f}"
     )
+    problems = longitudinal_problems(p, lm, r2)
     if r2 < 0.9:
         print(
             "throttle fit R2 < 0.9: switch LongitudinalMap to a 2-D table and add an expected-code-changes.md entry"
         )
+    if problems:
+        raise SystemExit("longitudinal identification FAILED, nothing written: " + "; ".join(problems))
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(yaml.safe_dump(dataclasses.asdict(lm)))
     vehicle.write_text(yaml.safe_dump(dataclasses.asdict(p)))

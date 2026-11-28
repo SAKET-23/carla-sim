@@ -137,6 +137,48 @@ def lowpass(x: np.ndarray, dt: float, fc: float) -> np.ndarray:
     return y
 
 
+def long_run_arrays(
+    rows: np.ndarray, dt: float, skip: float = 1.0
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """(vx, ax, throttle, brake) from rows of (vx, ax, throttle, brake), dropping the first `skip` s then low-passing ax.
+
+    set_target_velocity at reset makes get_acceleration spike to about v0/dt, so the transient goes before the filter."""
+    a = np.asarray(rows)[round(skip / dt) :]
+    return a[:, 0], lowpass(a[:, 1], dt, 5.0), a[:, 2], a[:, 3]
+
+
+def longitudinal_problems(p: VehicleParams, lm: LongitudinalMap, r2: float) -> list[str]:
+    """Reasons the longitudinal identification is not fit to be written (empty when sane)."""
+    checks = [
+        (0.0 <= p.rolling <= 1.0, f"rolling {p.rolling:.4g} outside [0, 1] m/s^2"),
+        (0.0 <= p.drag_coeff <= 0.01, f"drag_coeff {p.drag_coeff:.4g} outside [0, 0.01]"),
+        (p.max_decel > 0.0, f"max_decel {p.max_decel:.4g} <= 0"),
+        (lm.throttle_gain > 0.0, f"throttle_gain {lm.throttle_gain:.4g} <= 0"),
+        (lm.brake_gain > 0.0, f"brake_gain {lm.brake_gain:.4g} <= 0"),
+        (lm.coast_band <= 1.0, f"coast_band {lm.coast_band:.4g} > 1 m/s^2"),
+        (r2 >= 0.9, f"throttle fit R2 {r2:.3f} < 0.9"),
+    ]
+    return [msg for ok, msg in checks if not ok]
+
+
+def lateral_problems(val: dict, gains: list[float], K: float) -> list[str]:
+    """Held-out checks that failed, each named (empty when all pass)."""
+    checks = [
+        (val["r_rmse"] < 0.02, f"held-out r_rmse {val['r_rmse']:.4f} >= 0.02"),
+        (val["vy_rmse"] < 0.1, f"held-out vy_rmse {val['vy_rmse']:.4f} >= 0.1"),
+        (max(gains) < 0.10, f"steady-state gain error max {max(gains):.3f} >= 0.10"),
+        (K > 0, f"understeer K {K:.5f} <= 0 (check ECC-12)"),
+    ]
+    return [msg for ok, msg in checks if not ok]
+
+
+def steady_gain_error(seg: Segment, p: VehicleParams, K: float, window: int = 20) -> float:
+    """|measured / predicted - 1| of the yaw-rate gain over the last `window` samples, predicted v / (L + K v^2)
+    at the speed actually driven (the speed hold can miss its nominal speed)."""
+    v = float(np.mean(seg.vx[-window:]))
+    return abs(np.mean(seg.r[-window:]) / np.mean(seg.delta[-window:]) / (v / (p.L + K * v**2)) - 1.0)
+
+
 def fit_longitudinal(s: LongSamples, p: VehicleParams) -> LongitudinalMap:
     """calibration.md §2 step 4: drive side linear over throttle 0.2-0.8 and 3-20 m/s, brake side through the origin."""
     need = s.ax + p.rolling + p.drag_coeff * s.vx**2  # drive accel required beyond the resistances
