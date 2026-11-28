@@ -39,6 +39,8 @@ def carla_scenario(
         {"cache": entry["cache"]} if "cache" in entry else {}
     )
     route["town"] = town or route["town"]
+    # the LiteSim time limit was computed for LiteSim's route; CarlaSim redoes it for the planned CARLA route
+    route["time_from_route"] = True
     return dataclasses.replace(sc, route=None, carla_route=route)
 
 

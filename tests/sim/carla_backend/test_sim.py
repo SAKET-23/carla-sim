@@ -263,3 +263,19 @@ def test_reset_leaves_off_road_start_unsnapped(fake_carla, monkeypatch):
     monkeypatch.setattr(fake_carla.Map, "drivable", False)
     _sim().reset(straight_nominal())
     assert fake_carla.ego.transform.location.y == pytest.approx(0.0)  # start as given (see straight_nominal)
+
+
+def test_time_limit_recomputed_for_carla_route(fake_carla):
+    """A family scenario mapped to a CARLA route gets length / (0.5 * limit) + 30 s, not LiteSim's time limit."""
+    import dataclasses
+
+    import numpy as np
+
+    sim = _sim()
+    sc = straight_nominal(length=400.0, time_limit=5.0)
+    sc = dataclasses.replace(sc, carla_route={**sc.carla_route, "time_from_route": True})
+    sim.reset(sc)
+    r = sim.route()
+    assert sim._sc.time_limit == pytest.approx(r.length / (0.5 * float(np.median(r.speed_limit))) + 30.0)
+    sim.reset(straight_nominal(length=400.0, time_limit=5.0))
+    assert sim._sc.time_limit == 5.0

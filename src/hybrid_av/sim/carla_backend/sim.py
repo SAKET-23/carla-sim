@@ -39,6 +39,8 @@ from hybrid_av.sim.litesim.rules import (
 from hybrid_av.types import ActuatorCommand, Observation, TrafficContext
 from hybrid_av.types import TrafficLightState as LibLight
 
+_TIME_SLACK = 30.0  # s, nominal.yaml time_slack
+
 log = logging.getLogger(__name__)
 _SETTLE_TICKS = 10  # ECC-03: enough for the spawned ego to rest on the road
 _SENSOR_TIMEOUT = 2.0  # s, wall clock, per frame (ECC-11)
@@ -128,6 +130,10 @@ class CarlaSim:
             )
         wps = trace_waypoints(wmap, rc["start"], rc["goal"])
         self._route = route_from_waypoints(wps, rc.get("cache"))
+        if rc.get("time_from_route"):  # scenarios.md: time limit = length / (0.5 * speed limit) + slack
+            lim = float(np.median(self._route.speed_limit))
+            sc = dataclasses.replace(sc, time_limit=self._route.length / (0.5 * lim) + _TIME_SLACK)
+            self._sc = sc
         self._wp_s = chord_s(wps)
         self._pitch = np.radians([wp.transform.rotation.pitch for wp in wps])
         entry = [i for i, wp in enumerate(wps) if wp.is_junction and (i == 0 or not wps[i - 1].is_junction)]
