@@ -56,6 +56,7 @@ def test_wheelbase_split_and_unit_check():
     L, a, b = wheelbase_split(front, rear, com_x=0.1, loc=(100.0, 50.0), yaw_deg=90.0)
     assert L == pytest.approx(2.88) and a == pytest.approx(1.30) and b == pytest.approx(1.58)
     check_units(L, 0.1)
+    check_units(3.005, 0.45)  # CARLA 0.9.16 vehicle.tesla.model3, measured on the pod (G2)
     with pytest.raises(ValueError, match="ECC-32"):
         check_units(288.0, 0.1)
     with pytest.raises(ValueError, match="ECC-32"):

@@ -51,9 +51,9 @@ def wheelbase_split(front, rear, com_x: float, loc, yaw_deg: float) -> tuple[flo
 
 def check_units(L: float, com_x: float) -> None:
     # ECC-32: a 100x error here means the cm assumption is wrong; fix the script before fitting
-    if not 2.7 <= L <= 3.0 or abs(com_x) >= 1.0:
+    if not 2.5 <= L <= 3.2 or abs(com_x) >= 1.0:
         raise ValueError(
-            f"ECC-32 unit check failed: wheelbase {L:.3f} m (want 2.7-3.0), com_x {com_x:.3f} m (want < 1)"
+            f"ECC-32 unit check failed: wheelbase {L:.3f} m (want 2.5-3.2), com_x {com_x:.3f} m (want < 1)"
         )
 
 
