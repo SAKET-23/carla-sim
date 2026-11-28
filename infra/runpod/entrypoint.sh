@@ -79,6 +79,8 @@ PROFILE
   for var in $(compgen -e | grep -E '^(RUNPOD_|G1_|SMOKE_|POD_DEADLINE_EPOCH$|ANTHROPIC_API_KEY$|CARLA_QUALITY$)' || true); do
     printf 'export %s=%q\n' "$var" "${!var}" >> /etc/carla-sim.env
   done
+  # numpy's BLAS sizes its pool to the host's cores (128), not the pod's CPU quota: ~250 spinning threads per process
+  echo 'export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1' >> /etc/carla-sim.env
   umask "$old_umask"
   chmod 600 /etc/carla-sim.env
 }
